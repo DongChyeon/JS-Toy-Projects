@@ -1,9 +1,8 @@
 /*
 수정해야 하는 사항들
-1. checkWin 함수 (오류 제거)
-2. UI 개선 (몇 턴인지 어떤 색의 돌이 현재 턴인지 화면에 표시)
-3. 무르기 기능 (여유나면 스택을 통해 구현)
-4. 코드 간결하게
+1. UI 개선 (몇 턴인지 어떤 색의 돌이 현재 턴인지 화면에 표시)
+2. 무르기 기능 (여유나면 스택을 통해 구현)
+3. 코드 간결하게
 */
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -43,7 +42,7 @@ function init() {
 			// 바둑판 중간중간에 구분점을 그려줌
 			if ((y == 4 && x == 4) || (y == 4 && x == 12) || (y == 8 && x == 8) || (y == 12 && x == 4) || (y == 12 && x == 12)) {
 				ctx.beginPath();
-				ctx.arc(x * 40, y * 40, 3, 0, Math.PI * 2, true)
+				ctx.arc(x * 40, y * 40, 3, 0, Math.PI * 2, true);
 				ctx.fill();
 				ctx.closePath();
 			} 
@@ -80,43 +79,73 @@ function drawWhite(x, y) {
 	ctx.closePath();
 }
 
-function checkWin(color) {
+function checkWin() {
 	for (let y = 0; y < 15; y++) {
 		for (let x = 0; x < 15; x++) {
-			// 가로로 승리 조건 성립
-			if (go_stones[y][x].color == color && go_stones[y][x + 1].color == color && go_stones[y][x + 2].color == color && go_stones[y][x + 3].color == color && go_stones[y][x + 4].color == color) {
-				if (color == "black") {
-					alert("흑돌이 " + turn_count + " 턴만에 승리하였습니다.");
-				} else {
-					alert("백돌이 " + turn_count + " 턴만에 승리하였습니다.");
+			// 바둑돌이 놓여진 곳이라면 승리 조건 체크 시작
+			if (go_stones[y][x].color != "none") {
+				var target = go_stones[y][x].color;
+				var win = true;
+				// 가로로 승리 조건 성립
+				for (let i = 1; i < 5; i++) {
+					// 인덱스 초과 방지
+					if (x + 4 > 14) {
+						win = false;
+						break
+					}
+					if (go_stones[y][x + i].color != target) {
+						win = false;
+						break;
+					}
 				}
-				break;
-			} // 세로로 승리 조건 성립
-			else if (go_stones[y][x].color == color && go_stones[y + 1][x].color == color && go_stones[y + 2][x].color == color && go_stones[y + 3][x].color == color && go_stones[y + 4][x].color == color) {
-				if (color == "black") {
-					alert("흑돌이 " + turn_count + " 턴만에 승리하였습니다.");
-				} else {
-					alert("백돌이 " + turn_count + " 턴만에 승리하였습니다.");
+				if (win) target == "black" ? alert("흑돌이 " + turn_count + " 턴만에 승리하였습니다.") : alert("백돌이 " + turn_count + " 턴만에 승리하였습니다.");
+
+				win = true;
+				// 세로로 승리 조건 성립
+				for (let i = 1; i < 5; i++) {
+					// 인덱스 초과 방지
+					if (y + 4 > 14) {
+						win = false;
+						break;
+					}
+					if (go_stones[y + i][x].color != target) {
+						win = false;
+						break;
+					}
 				}
-				break;
-			} // / 방향 대각선으로 승리 조건 성립
-			else if (go_stones[y][x].color == color && go_stones[y - 1][x + 1].color == color && go_stones[y - 2][x + 2].color == color && go_stones[y - 3][x + 3].color == color && go_stones[y - 4][x + 4].color == color) {
-				if (color == "black") {
-					alert("흑돌이 " + turn_count + " 턴만에 승리하였습니다.");
-				} else {
-					alert("백돌이 " + turn_count + " 턴만에 승리하였습니다.");
+				if (win) target == "black" ? alert("흑돌이 " + turn_count + " 턴만에 승리하였습니다.") : alert("백돌이 " + turn_count + " 턴만에 승리하였습니다.");
+
+				win = true;
+				// / 방향 대각선으로 승리 조건 성립
+				for (let i = 1; i < 5; i++) {
+					// 인덱스 초과 방지
+					if (x + 4 > 14 || y - 4 < 0) {
+						win = false;
+						break;
+					}
+					if (go_stones[y - i][x + i].color != target) {
+						win = false;
+						break;
+					}
 				}
-				break;
-			} // \ 방향 대각선으로 승리 조건 성립
-			else if (go_stones[y][x].color == color && go_stones[y + 1][x + 1].color == color && go_stones[y + 2][x + 2].color == color && go_stones[y + 3][x + 3].color == color && go_stones[y + 4][x + 4].color == color) {
-				if (color == "black") {
-					alert("흑돌이 " + turn_count + " 턴만에 승리하였습니다.");
-				} else {
-					alert("백돌이 " + turn_count + " 턴만에 승리하였습니다.");
+				if (win) target == "black" ? alert("흑돌이 " + turn_count + " 턴만에 승리하였습니다.") : alert("백돌이 " + turn_count + " 턴만에 승리하였습니다.");
+
+				win = true;
+				// \ 방향 대각선으로 승리 조건 성립
+				for (let i = 1; i < 5; i++) {
+					// 인덱스 초과 방지
+					if (x + 4 > 14 || y + 4 > 14) {
+						win = false;
+						break;
+					}
+					if (go_stones[y + i][x + i].color != target) {
+						win = false;
+						break;
+					}
 				}
-				break;
+				if (win) target == "black" ? alert("흑돌이 " + turn_count + " 턴만에 승리하였습니다.") : alert("백돌이 " + turn_count + " 턴만에 승리하였습니다.");
 			}
-		}HTMLCanvasElement
+		}
 	}
 }
 
@@ -131,11 +160,7 @@ function onclick(event){
 	if (turn_count == 1) {
 		if (x == 7 && y == 7) {
 			go_stones[y][x].setColor(turn);
-			if (turn == "black") {
-				turn = "white";
-			} else {
-				turn = "black";
-			}
+			turn == "black" ? turn = "white" : turn = "black";
 			turn_count += 1;
 		} else {
 			alert("첫 번째 턴에는 정중앙에만 바둑돌을 놓을 수 있습니다.");
@@ -146,12 +171,8 @@ function onclick(event){
 			if (go_stones[y][x].color == "none") {
 				go_stones[y][x].setColor(turn);
 				// 승리 체크
-				checkWin(turn);
-				if (turn == "black") {
-					turn = "white";
-				} else {
-					turn = "black";
-				}
+				checkWin();
+				turn == "black" ? turn = "white" : turn = "black"
 				turn_count += 1;
 			} else {
 				alert("이미 바둑돌을 놓은 위치에는 바둑돌을 놓을 수 없습니다.")
