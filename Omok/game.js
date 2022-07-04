@@ -150,9 +150,10 @@ function checkWin() {
 }
 
 function onclick(event){ 
-	// 캔버스의 위치를 고려해 마우스 좌표를 취득 
-	let x = event.clientX - ctx.canvas.offsetLeft; 
-	let y = event.clientY - ctx.canvas.offsetTop;
+    // 캔버스 상에서의 마우스 클릭 좌표를 획득
+    let rect = canvas.getBoundingClientRect();
+	let x = event.clientX - rect.left; 
+    let y = event.clientY - rect.top;
 	x = Math.round(x / 40) - 1;
 	y = Math.round(y / 40) - 1;
 
