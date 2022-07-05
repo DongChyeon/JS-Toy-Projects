@@ -1,6 +1,6 @@
 /*
 수정해야 하는 사항들
-1. 무르기 기능 (여유나면 스택을 통해 구현)
+1. 무르기 기능 (여유나면 스택을 통해 구현)]
 2. 코드 간결하게
 */
 const canvas = document.getElementById("canvas");
@@ -28,36 +28,17 @@ class Go_stone {
 	
 	setColor(color) {
 		this.color = color;
-		if (this.color == "white") {
-			drawWhite(this.x, this.y);
-		} else {
-			drawBlack(this.x, this.y);
-		}
 	}
 }
 
+// 게임 초기화
 function init() {
-	// 바둑판 그리기
-	ctx.fillStyle = "black";
-	ctx.strokeStyle = "black";
-	for (let y = 1; y < 15; y++) {
-		for (let x = 1; x < 15; x++) {
-			ctx.strokeRect(40 * y, 40 * x, 40, 40);
-			// 바둑판 중간중간에 구분점을 그려줌
-			if ((y == 4 && x == 4) || (y == 4 && x == 12) || (y == 8 && x == 8) || (y == 12 && x == 4) || (y == 12 && x == 12)) {
-				ctx.beginPath();
-				ctx.arc(x * 40, y * 40, 3, 0, Math.PI * 2, true);
-				ctx.fill();
-				ctx.closePath();
-			} 
-		}	
-	}
-	
 	for (let y = 0; y < 15; y++) {
 		for (let x = 0; x < 15; x++) {
 			go_stones[y][x] = new Go_stone(x + 1, y + 1);
 		}
-	}
+    }
+    update();
 	
 	turn = "black";
 	turn_count = 1;
@@ -81,6 +62,34 @@ function drawWhite(x, y) {
 	ctx.fill();
 	ctx.stroke();
 	ctx.closePath();
+}
+
+// 캔버스에 게임 진행 사항을 업데이트
+function update() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    // 바둑판 그리기
+	ctx.fillStyle = "black";
+	ctx.strokeStyle = "black";
+	for (let y = 1; y < 15; y++) {
+		for (let x = 1; x < 15; x++) {
+			ctx.strokeRect(40 * y, 40 * x, 40, 40);
+			// 바둑판 중간중간에 구분점을 그려줌
+			if ((y == 4 && x == 4) || (y == 4 && x == 12) || (y == 8 && x == 8) || (y == 12 && x == 4) || (y == 12 && x == 12)) {
+				ctx.beginPath();
+				ctx.arc(x * 40, y * 40, 3, 0, Math.PI * 2, true);
+				ctx.fill();
+				ctx.closePath();
+			} 
+		}	
+    }
+    
+    // 오목판에 돌을 그려줌
+    for (let y = 0; y < 15; y++) {
+        for (let x = 0; x < 15; x++) {
+            if (go_stones[y][x].color == "black") drawBlack(x + 1, y + 1);
+            else if (go_stones[y][x].color == "white") drawWhite(x + 1, y + 1);
+        }
+    }
 }
 
 // 승리 체크 함수 (승리한 플레이어가 있을 시 true 반환)
@@ -227,5 +236,7 @@ function onclick(event) {
 		} else {
 			status.innerHTML = "바둑돌을 놓을 수 있는 위치가 아닙니다.";
 		}
-	}
+    }
+    // 캔버스에 변경 사항 업데이트
+    update();
 }
