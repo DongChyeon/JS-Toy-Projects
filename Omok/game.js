@@ -1,47 +1,58 @@
-/*
-수정해야 하는 사항들
-1. 무르기 기능 (여유나면 스택을 통해 구현)]
-2. 코드 간결하게
-*/
-const canvas = document.getElementById("canvas");
-const status = document.getElementById("status");
-const ctx = canvas.getContext("2d");
-const go_stones = new Array(15);
-for (var i = 0; i < go_stones.length; i++) {
-    go_stones[i] = new Array(15);
+// 몇 수에 어떤 돌을 놓았는지 저장할 스택
+class Stack {
+    constructor() {
+        this.data = [];
+    }
+    push(item) {
+        this.data.push(item);
+    }
+    pop() {
+        return this.data.pop();
+    }
 }
 
-// 게임의 진행 여부
-let running = true;
-
-// 현재 플레이어의 턴
-let turn = "black";
-let turn_count = 1;
-canvas.addEventListener("click", onclick);
-
-class Go_stone {
-	constructor(x, y) {
-		this.x = x;
-		this.y = y;
-		this.color = "none";
-	}
-	
+// 오목판에 놓여질 돌
+class goStone {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+    }	
 	setColor(color) {
 		this.color = color;
 	}
 }
 
+const canvas = document.getElementById("canvas");
+const status = document.getElementById("status");
+const undoBtn = document.getElementById("undo");
+const ctx = canvas.getContext("2d");
+const stack = new Stack();
+const goStones = new Array(16);
+for (var i = 0; i < goStones.length; i++) {
+    goStones[i] = new Array(16);
+}
+
+// 게임의 진행 여부
+let running = true;
+// 현재 플레이어의 턴
+let turn = "black";
+let turnCount = 1;
+
+canvas.addEventListener("click", placeStone);
+undoBtn.addEventListener("click", undo);
+
 // 게임 초기화
 function init() {
-	for (let y = 0; y < 15; y++) {
-		for (let x = 0; x < 15; x++) {
-			go_stones[y][x] = new Go_stone(x + 1, y + 1);
+	for (let y = 1; y <= 15; y++) {
+		for (let x = 1; x <= 15; x++) {
+			goStones[y][x] = new goStone(x, y, "none");
 		}
     }
     update();
 	
 	turn = "black";
-	turn_count = 1;
+	turnCount = 1;
 }
 
 // 정해진 좌표에 흑돌을 그림
@@ -64,7 +75,7 @@ function drawWhite(x, y) {
 	ctx.closePath();
 }
 
-// 캔버스에 게임 진행 사항을 업데이트
+// 게임 진행 사항 업데이트
 function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     // 바둑판 그리기
@@ -84,37 +95,43 @@ function update() {
     }
     
     // 오목판에 돌을 그려줌
-    for (let y = 0; y < 15; y++) {
-        for (let x = 0; x < 15; x++) {
-            if (go_stones[y][x].color == "black") drawBlack(x + 1, y + 1);
-            else if (go_stones[y][x].color == "white") drawWhite(x + 1, y + 1);
+    for (let y = 1; y <= 15; y++) {
+        for (let x = 1; x <= 15; x++) {
+            if (goStones[y][x].color == "black") drawBlack(x, y);
+            else if (goStones[y][x].color == "white") drawWhite(x, y);
         }
     }
+
+    // 상태 메시지 변경
+    let message = "현재 턴 : ";
+    turn == "black" ? message += "●<br>" : message += "○<br>";
+    message += turnCount + " 번째 턴입니다.";
+    status.innerHTML = message;
 }
 
 // 승리 체크 함수 (승리한 플레이어가 있을 시 true 반환)
 function checkWin() {
-	for (let y = 0; y < 15; y++) {
-		for (let x = 0; x < 15; x++) {
+	for (let y = 1; y <= 15; y++) {
+		for (let x = 1; x <= 15; x++) {
 			// 바둑돌이 놓여진 곳이라면 승리 조건 체크 시작
-			if (go_stones[y][x].color != "none") {
-				var target = go_stones[y][x].color;
+			if (goStones[y][x].color != "none") {
+				var target = goStones[y][x].color;
 				var win = true;
 				// 가로로 승리 조건 성립
 				for (let i = 1; i < 5; i++) {
 					// 인덱스 초과 방지
-					if (x + 4 > 14) {
+					if (x + 4 > 15) {
 						win = false;
 						break
 					}
-					if (go_stones[y][x + i].color != target) {
+					if (goStones[y][x + i].color != target) {
 						win = false;
 						break;
 					}
                 }
                 // 승리 메세지 출력
                 if (win) {
-                    target == "black" ? message = "흑돌이 " + turn_count + " 턴만에 승리하였습니다.<br>" : message = "백돌이 " + turn_count + " 턴만에 승리하였습니다.<br>";
+                    target == "black" ? message = "흑돌이 " + turnCount + " 턴만에 승리하였습니다.<br>" : message = "백돌이 " + turnCount + " 턴만에 승리하였습니다.<br>";
                     message += "다시 시작할려면 새로고침 하시오.";
                     status.innerHTML = message;
 
@@ -125,18 +142,18 @@ function checkWin() {
 				// 세로로 승리 조건 성립
 				for (let i = 1; i < 5; i++) {
 					// 인덱스 초과 방지
-					if (y + 4 > 14) {
+					if (y + 4 > 15) {
 						win = false;
 						break;
 					}
-					if (go_stones[y + i][x].color != target) {
+					if (goStones[y + i][x].color != target) {
 						win = false;
 						break;
 					}
                 }
                 // 승리 메세지 출력
 				if (win) { 
-                    target == "black" ? message = "흑돌이 " + turn_count + " 턴만에 승리하였습니다.<br>" : message = "백돌이 " + turn_count + " 턴만에 승리하였습니다.<br>";
+                    target == "black" ? message = "흑돌이 " + turnCount + " 턴만에 승리하였습니다.<br>" : message = "백돌이 " + turnCount + " 턴만에 승리하였습니다.<br>";
                     message += "다시 시작할려면 새로고침 하시오.";
                     status.innerHTML = message;
 
@@ -147,18 +164,18 @@ function checkWin() {
 				// / 방향 대각선으로 승리 조건 성립
 				for (let i = 1; i < 5; i++) {
 					// 인덱스 초과 방지
-					if (x + 4 > 14 || y - 4 < 0) {
+					if (x + 4 > 15 || y - 4 < 1) {
 						win = false;
 						break;
 					}
-					if (go_stones[y - i][x + i].color != target) {
+					if (goStones[y - i][x + i].color != target) {
 						win = false;
 						break;
 					}
                 }
                 // 승리 메세지 출력
 				if (win) { 
-                    target == "black" ? message = "흑돌이 " + turn_count + " 턴만에 승리하였습니다.<br>" : message = "백돌이 " + turn_count + " 턴만에 승리하였습니다.<br>";
+                    target == "black" ? message = "흑돌이 " + turnCount + " 턴만에 승리하였습니다.<br>" : message = "백돌이 " + turnCount + " 턴만에 승리하였습니다.<br>";
                     message += "다시 시작할려면 새로고침 하시오.";
                     status.innerHTML = message;
 
@@ -169,18 +186,18 @@ function checkWin() {
 				// \ 방향 대각선으로 승리 조건 성립
 				for (let i = 1; i < 5; i++) {
 					// 인덱스 초과 방지
-					if (x + 4 > 14 || y + 4 > 14) {
+					if (x + 4 > 15 || y + 4 > 15) {
 						win = false;
 						break;
 					}
-					if (go_stones[y + i][x + i].color != target) {
+					if (goStones[y + i][x + i].color != target) {
 						win = false;
 						break;
 					}
                 }
                 // 승리 메세지 출력
 				if (win) { 
-                    target == "black" ? message = "흑돌이 " + turn_count + " 턴만에 승리하였습니다.<br>" : message = "백돌이 " + turn_count + " 턴만에 승리하였습니다.<br>";
+                    target == "black" ? message = "흑돌이 " + turnCount + " 턴만에 승리하였습니다.<br>" : message = "백돌이 " + turnCount + " 턴만에 승리하였습니다.<br>";
                     message += "다시 시작할려면 새로고침 하시오.";
                     status.innerHTML = message;
 
@@ -192,43 +209,36 @@ function checkWin() {
     return false;
 }
 
-function onclick(event) {
+function placeStone(event) {
     if (!running) return;
 
     // 캔버스 상에서의 마우스 클릭 좌표를 획득
     let rect = canvas.getBoundingClientRect();
-	let x = event.clientX - rect.left; 
-    let y = event.clientY - rect.top;
-	x = Math.round(x / 40) - 1;
-	y = Math.round(y / 40) - 1;
+	let x = Math.round((event.clientX - rect.left) / 40); 
+    let y = Math.round((event.clientY - rect.top) / 40);
 
-    let message = "현재 턴 : ";
 	// 첫번째 턴에는 중앙에만 바둑돌을 놓을 수 있도록 함
-	if (turn_count == 1) {
-		if (x == 7 && y == 7) {
-			go_stones[y][x].setColor(turn);
+	if (turnCount == 1) {
+		if (x == 8 && y == 8) {
+            stack.push(new goStone(x, y, turn));
+			goStones[y][x].setColor(turn);
 			turn == "black" ? turn = "white" : turn = "black";
-            turn_count += 1;
-            // 현재 누구 턴이고 몇 번째 턴인지 상태 메세지 업데이트
-            turn == "black" ? message += "●<br>" : message += "○<br>";
-            message += turn_count + " 번째 턴입니다.";
-            status.innerHTML = message;
+            turnCount += 1;
+            update();
 		} else {
             status.innerHTML = "첫 번째 턴에는 정중앙에만 바둑돌을 놓을 수 있습니다.";
 		}
 	} else {
 		// 어떤 바둑돌도 놓여지지 않은 위치라면 바둑돌을 놓을 수 있도록 함
-		if (x >= 0 && x <= 14 && y >= 0 && y <= 14) {
-			if (go_stones[y][x].color == "none") {
-				go_stones[y][x].setColor(turn);
+		if (x >= 1 && x <= 15 && y >= 1 && y <= 15) {
+			if (goStones[y][x].color == "none") {
+                stack.push(new goStone(x, y, turn));
+				goStones[y][x].setColor(turn);
                 // 승리 체크
 				if (running = !checkWin()) {
                     turn == "black" ? turn = "white" : turn = "black"
-                    turn_count += 1;
-                    // 현재 누구 턴이고 몇 번째 턴인지 상태 메세지 업데이트
-                    turn == "black" ? message += "●<br>" : message += "○<br>";
-                    message += turn_count + " 번째 턴입니다.";
-                    status.innerHTML = message;
+                    turnCount += 1;
+                    update();
                 }
 			} else {
 				status.innerHTML = "이미 바둑돌을 놓은 위치에는 바둑돌을 놓을 수 없습니다.";
@@ -237,6 +247,17 @@ function onclick(event) {
 			status.innerHTML = "바둑돌을 놓을 수 있는 위치가 아닙니다.";
 		}
     }
-    // 캔버스에 변경 사항 업데이트
-    update();
+}
+
+// 한 수 무르기
+function undo() {
+    if (turnCount <= 1) {
+        status.innerHTML = "아무것도 안 둔 상태에서는 한 수 무르기를 사용할 수 없습니다.";
+    } else {
+        let lastStone = stack.pop();
+        goStones[lastStone.y][lastStone.x].setColor("none");
+        turn == "black" ? turn = "white" : turn = "black";
+        turnCount -= 1;
+        update();
+    }
 }

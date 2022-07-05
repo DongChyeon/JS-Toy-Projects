@@ -1,25 +1,35 @@
 body {
-	display : flex;
-	width : 100%;
-	height : 100vh;
-	background-color : #000000;
-	align-items : center;
-	justify-content : center;
+	display: flex;
+	width: 100%;
+	height: 100vh;
+	background-color: #000000;
+	align-items: center;
+	justify-content: center;
 }
 
 .container {
-	padding : 20px;
-	display : block;
-	background-color : #FFFFFF;
-	border-radius : 20px;
-	text-align : center;
+	padding: 20px;
+	display: block;
+	background-color: #FFFFFF;
+	border-radius: 20px;
+	text-align: center;
 }
 
 #canvas {
-	margin : 20px;
-	background-color : #dfa450;
+	margin: 10px;
+	background-color: #dfa450;
 }
 
 #status {
-    margin : 10px;
+    margin: 10px;
+}
+
+#undo {
+    padding: 7px;
+    border: 0px;
+    border-radius: 10px;
+    outline: 0px;
+    background-color: #000000;
+    color: #FFFFFF;
+    font-size: 18px;
 }
