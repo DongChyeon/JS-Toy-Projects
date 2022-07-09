@@ -1,4 +1,5 @@
-// 렌주룰 기반으로 구현 에정 (금수도 구현해보자!)
+// 렌주룰 기반으로 구현
+// 4-4 금수 판정, 장목 금수 판정, 3-3 거짓 금수 판정 구현 남음
 
 // 오목판에 놓여질 돌
 class goStone {
@@ -25,6 +26,7 @@ for (var i = 0; i < goStones.length; i++) {
 const COLOR_NONE = 0;
 const COLOR_BLACK = 1;
 const COLOR_WHITE = 2;
+const COLOR_FORBIDDEN = 3;
 
 // 게임의 진행 여부
 let running = true;
@@ -42,7 +44,7 @@ function init() {
 			goStones[y][x] = new goStone(x, y, COLOR_NONE);
 		}
 	}
-	update();
+	updateCanvas();
 	turn = COLOR_BLACK;
 	turnCount = 1;
 }
@@ -59,7 +61,8 @@ function drawBlack(x, y) {
 // 정해진 좌표에 백돌을 그림
 function drawWhite(x, y) {
 	ctx.fillStyle = "white";
-	ctx.strokeStyle = "black";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
 	ctx.beginPath();
 	ctx.arc(x * 40, y * 40, 18, 0, Math.PI * 2, true);
 	ctx.fill();
@@ -67,8 +70,23 @@ function drawWhite(x, y) {
 	ctx.closePath();
 }
 
-// 게임 진행 사항 업데이트
-function update() {
+// 정해진 좌표에 금수표시를 그림
+function drawForbidden(x, y) {
+    ctx.fillStyle = "#DFA450";
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x * 40, y * 40 - 18);
+    ctx.lineTo(x * 40 + 18, y * 40 + 18);
+    ctx.lineTo(x * 40 - 18, y * 40 + 18)
+    ctx.lineTo(x * 40, y * 40 - 18);
+    ctx.fill();
+    ctx.stroke();
+    ctx.closePath();
+}
+
+// 캔버스에 게임 진행 사항 업데이트
+function updateCanvas() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	// 바둑판 그리기
 	ctx.fillStyle = "black";
@@ -91,16 +109,12 @@ function update() {
 		for (let x = 1; x <= 15; x++) {
 			if (goStones[y][x].color == COLOR_BLACK) drawBlack(x, y);
 			else if (goStones[y][x].color == COLOR_WHITE) drawWhite(x, y);
+			// 흑돌 차례일 때만 금수 표시를 그려줌
+            else if (turn == COLOR_BLACK && goStones[y][x].color == COLOR_FORBIDDEN) drawForbidden(x, y);
 		}
 	}
 
-	if (running) {
-		// 상태 메시지 변경
-		let message = "현재 턴 : ";
-		turn == COLOR_BLACK ? message += "●<br>" : message += "○<br>";
-		message += turnCount + " 번째 턴입니다.";
-		status.innerHTML = message;
-	} else {
+	if (!running) {
 		// 한쪽이 승리한 경우 몇번째 수에 어떤 돌을 놓았는지 출력
 		for (let i = 0; i < stack.length; i++) {
 			ctx.font = "bold 20px sans-serif";
@@ -111,16 +125,24 @@ function update() {
 	}
 }
 
+// 턴 상태 메시지 업데이트
+function updateStatusMsg() {
+	let message = "현재 턴 : ";
+	turn == COLOR_BLACK ? message += "●<br>" : message += "○<br>";
+	message += turnCount + " 번째 턴입니다.";
+	status.innerHTML = message;
+}
+
 // 승리 체크 함수 (승리한 플레이어가 있을 시 true 반환)
 function checkWin() {
 	for (let y = 1; y <= 15; y++) {
 		for (let x = 1; x <= 15; x++) {
 			// 바둑돌이 놓여진 곳이라면 승리 조건 체크 시작
-			if (goStones[y][x].color != COLOR_NONE) {
-				if (checkRight(x, y) || checkDown(x, y) || checkUpRight(x, y) || checkDownRight(x, y)) {
+			if (goStones[y][x].color == COLOR_BLACK || goStones[y][x].color == COLOR_WHITE) {
+				if (checkHori(x, y) || checkVert(x, y) || checkRtlb(x, y) || checkLtrb(x, y)) {
 					if (goStones[y][x].color == COLOR_BLACK) {
 						message = "흑돌이 " + turnCount + " 턴만에 승리하였습니다.<br>"
-					} else {
+					} else if (goStones[y][x].color == COLOR_WHITE) {
 						message = "백돌이 " + turnCount + " 턴만에 승리하였습니다.<br>";
 					}
 					message += "다시 시작할려면 새로고침 하시오.";
@@ -135,7 +157,7 @@ function checkWin() {
 }
 
 // 가로로 승리 조건 체크
-function checkRight(x, y) {
+function checkHori(x, y) {
 	var target = goStones[y][x].color;
 	// 인덱스 초과 방지
 	if (x + 4 > 15) return false;
@@ -146,7 +168,7 @@ function checkRight(x, y) {
 }
 
 // 세로로 승리 조건 성립
-function checkDown(x, y) {
+function checkVert(x, y) {
 	var target = goStones[y][x].color;
 	// 인덱스 초과 방지
 	if (y + 4 > 15) return false;
@@ -157,7 +179,7 @@ function checkDown(x, y) {
 }
 
 // / 방향 대각선으로 승리 조건 성립
-function checkUpRight(x, y) {
+function checkRtlb(x, y) {
 	var target = goStones[y][x].color;
 	// 인덱스 초과 방지
 	if (x + 4 > 15 || y - 4 < 1) return false;
@@ -168,7 +190,7 @@ function checkUpRight(x, y) {
 }
 
 // \ 방향 대각선으로 승리 조건 성립
-function checkDownRight(x, y) {
+function checkLtrb(x, y) {
 	var target = goStones[y][x].color;
 	// 인덱스 초과 방지
 	if (x + 4 > 15 || y + 4 > 15) return false;
@@ -178,28 +200,188 @@ function checkDownRight(x, y) {
 	return true;
 }
 
-// 가로로 열린 삼 체크 (대략 어떻게 작동할지 코드만 작성해봄)
-function checkOpenSamRight(x, y) {
-	// X☆●●X 일 때
-	// 왼쪽이 막혀있으면 닫힌 삼
-	if (x - 1 < 1 || goStones[y][x - 1].color == COLOR_WHITE) return false;
-	// 오른쪽이 막혀있으면 닫힌 삼
-	if (x + 3 > 15 || goStones[y][x + 3].color == COLOR_WHITE) return false;
-	if (goStones[y][x].color == COLOR_BLACK && goStones[y][x + 1].color == COLOR_BLACK && goStones[y][x + 2].color == COLOR_BLACK) return true;
+// 3-3 금수 체크
+function checkSamSam(x, y) {
+    let horiSam = checkHoriSam(x, y);
+    let vertSam = checkVertSam(x, y);
+	let rtlbSam = checkRtlbSam(x, y);
+	let ltrbSam = checkLtrbSam(x, y);
 
-	// X☆X●●X 일 때
-	// 왼쪽이 막혀있으면 닫힌 삼
-	if (x - 1 < 1 || goStones[y][x - 1].color == COLOR_WHITE) return false;
-	// 오른쪽이 막혀있으면 닫힌 삼
-	if (x + 4 > 15 || goStones[y][x + 4].color == COLOR_WHITE) return false;
-	if (goStones[y][x].color == COLOR_BLACK && goStones[y][x + 2].color == COLOR_BLACK && goStones[y][x + 3].color == COLOR_BLACK) return true;
+    if (horiSam + vertSam + rtlbSam + ltrbSam >= 2) return true;
 
-	// X☆●X●X 일 때
-	// 왼쪽이 막혀있으면 닫힌 삼
-	if (x - 1 < 1 || goStones[y][x - 1].color == COLOR_WHITE) return false;
-	// 오른쪽이 막혀있으면 닫힌 삼
-	if (x + 4 > 15 || goStones[y][x + 3].color == COLOR_WHITE) return false;
-	if (goStones[y][x].color == COLOR_BLACK && goStones[y][x + 1].color == COLOR_BLACK && goStones[y][x + 3].color == COLOR_BLACK) return true;
+    return false;
+}
+
+// 가로 방향 열린 3 체크
+function checkHoriSam(x, y) {
+    let cnt_black = 1;
+    let cnt_white = 0;
+    let cnt_none = 0;
+
+    let tmp_horiSam = true;
+
+    // 가로 우 방향 체크
+    for (let i = 1; i < 4; i++) {
+        if (x + i > 15) break;
+        if (goStones[y][x + i].color == COLOR_WHITE) {
+            cnt_white += 1; 
+        } else {
+            goStones[y][x + i].color == COLOR_BLACK ? cnt_black += 1 : cnt_none += 1;
+        }
+        // 4번째 칸이 백돌일 때 추가 카운팅
+        if (i == 3 && x + i + 1 < 16) {
+            if (goStones[y][x + i + 1].color == COLOR_WHITE) cnt_white += 1;
+        }
+    }
+
+    if (cnt_none <= cnt_white) tmp_horiSam = false;
+
+    // 가로 좌 방향 체크
+    for (let i = 1; i < 4; i++) {
+        if (x - i < 1) break;
+        if (goStones[y][x - i].color == COLOR_WHITE) {
+            cnt_white += 1; 
+        } else {
+            goStones[y][x - i].color == COLOR_BLACK ? cnt_black += 1 : cnt_none += 1;
+        }
+        // 4번째 칸이 백돌일 때 추가 카운팅
+        if (i == 3 && x - i - 1 > 0) {
+            if (goStones[y][x - i - 1].color == COLOR_WHITE) cnt_white += 1;
+        }
+    }
+
+    if (cnt_none - cnt_white > 3 && tmp_horiSam && cnt_black == 3) return true;
+
+    return false;
+}
+
+// 세로 방향 열린 3 체크
+function checkVertSam(x, y) {
+    let cnt_black = 1;
+    let cnt_white = 0;
+    let cnt_none = 0;
+
+    let tmp_vertSam = true;
+
+    // 세로 하 방향 체크
+    for (let i = 1; i < 4; i++) {
+        if (y + i > 15) break;
+        if (goStones[y + i][x].color == COLOR_WHITE) {
+            cnt_white += 1; 
+        } else {
+            goStones[y + i][x].color == COLOR_BLACK ? cnt_black += 1 : cnt_none += 1;
+        }
+        // 4번째 칸이 백돌일 때 추가 카운팅
+        if (i == 3 && y + i + 1 < 16) {
+            if (goStones[y + i + 1][x].color == COLOR_WHITE) cnt_white += 1;
+        }
+    }
+
+    if (cnt_none <= cnt_white) tmp_vertSam = false;
+
+    // 세로 상 방향 체크
+    for (let i = 1; i < 4; i++) {
+        if (y - i < 1) break;
+        if (goStones[y - i][x].color == COLOR_WHITE) {
+            cnt_white += 1; 
+        } else {
+            goStones[y - i][x].color == COLOR_BLACK ? cnt_black += 1 : cnt_none += 1;
+        }
+        // 4번째 칸이 백돌일 때 추가 카운팅
+        if (i == 3 && y - i - 1 > 0) {
+            if (goStones[y - i - 1][x].color == COLOR_WHITE) cnt_white += 1;
+        }
+    }
+
+    if (cnt_none - cnt_white > 3 && tmp_vertSam && cnt_black == 3) return true;
+
+    return false;
+}
+
+// / 방향 열린 3 체크
+function checkRtlbSam(x, y) {
+    let cnt_black = 1;
+    let cnt_white = 0;
+    let cnt_none = 0;
+
+    let tmp_rtlbSam = true;
+
+    // / 오른쪽 방향 체크
+    for (let i = 1; i < 4; i++) {
+        if (x + i > 15 || y - i < 1) break;
+        if (goStones[y - i][x + i].color == COLOR_WHITE) {
+            cnt_white += 1; 
+        } else {
+            goStones[y - i][x + i].color == COLOR_BLACK ? cnt_black += 1 : cnt_none += 1;
+        }
+        // 4번째 칸이 백돌일 때 추가 카운팅
+        if (i == 3 && x + i + 1 < 16 && y - i - 1 > 0) {
+            if (goStones[y - i - 1][x + i + 1].color == COLOR_WHITE) cnt_white += 1;
+        }
+    }
+
+    if (cnt_none <= cnt_white) tmp_rtlbSam = false;
+
+    // / 왼쪽 방향 체크
+    for (let i = 1; i < 4; i++) {
+        if (x - i < 1 || y + i > 15) break;
+        if (goStones[y + i][x - i].color == COLOR_WHITE) {
+            cnt_white += 1; 
+        } else {
+            goStones[y + i][x - i].color == COLOR_BLACK ? cnt_black += 1 : cnt_none += 1;
+        }
+        // 4번째 칸이 백돌일 때 추가 카운팅
+        if (i == 3 && x - i - 1 > 0 && y + i + 1 < 16) {
+            if (goStones[y + i + 1][x - i - 1].color == COLOR_WHITE) cnt_white += 1;
+        }
+    }
+
+    if (cnt_none - cnt_white > 3 && tmp_rtlbSam && cnt_black == 3) return true;
+
+    return false;
+}
+
+// \ 방향 열린 3 체크
+function checkLtrbSam(x, y) {
+    let cnt_black = 1;
+    let cnt_white = 0;
+    let cnt_none = 0;
+
+    let tmp_ltrbSam = true;
+
+    // \ 오른쪽 방향 체크
+    for (let i = 1; i < 4; i++) {
+        if (x + i > 15 || y + i > 15) break;
+        if (goStones[y + i][x + i].color == COLOR_WHITE) {
+            cnt_white += 1; 
+        } else {
+            goStones[y + i][x + i].color == COLOR_BLACK ? cnt_black += 1 : cnt_none += 1;
+        }
+        // 4번째 칸이 백돌일 때 추가 카운팅
+        if (i == 3 && x + i + 1 < 16 && y + i + 1 < 16) {
+            if (goStones[y + i + 1][x + i + 1].color == COLOR_WHITE) cnt_white += 1;
+        }
+    }
+
+    if (cnt_none <= cnt_white) tmp_ltrbSam = false;
+
+    // \ 왼쪽 방향 체크
+    for (let i = 1; i < 4; i++) {
+        if (x - i < 1 || y - i < 1) break;
+        if (goStones[y - i][x - i].color == COLOR_WHITE) {
+            cnt_white += 1; 
+        } else {
+            goStones[y - i][x - i].color == COLOR_BLACK ? cnt_black += 1 : cnt_none += 1;
+        }
+        // 4번째 칸이 백돌일 때 추가 카운팅
+        if (i == 3 && x - i - 1 > 0 && y - i - 1 > 0) {
+            if (goStones[y - i - 1][x - i - 1].color == COLOR_WHITE) cnt_white += 1;
+        }
+    }
+
+    if (cnt_none - cnt_white > 3 && tmp_ltrbSam && cnt_black == 3) return true;
+
+    return false;
 }
 
 function placeStone(event) {
@@ -212,20 +394,45 @@ function placeStone(event) {
 
 	// 어떤 바둑돌도 놓여지지 않은 위치라면 바둑돌을 놓을 수 있도록 함
 	if (x >= 1 && x <= 15 && y >= 1 && y <= 15) {
-		if (goStones[y][x].color == COLOR_NONE) {
-			stack.push(new goStone(x, y, turn));
+		// 흑돌일 경우 금수 자리가 아니고 아무 돌도 놓여있지 않은 곳에만 돌을 놓을 수 있음
+		if (turn == COLOR_BLACK && goStones[y][x].color == COLOR_NONE) {
 			goStones[y][x].setColor(turn);
+			if (checkSamSam(x, y)) {
+				goStones[y][x].setColor(COLOR_FORBIDDEN);
+				status.innerHTML = "해당 자리는 3-3 금수이므로 돌을 놓을 수 없습니다.";
+				setTimeout(() => updateStatusMsg(), 2000);
+			} else {
+				stack.push(new goStone(x, y, turn));
+				// 승리 체크 (한쪽이 승리한 경우 running을 false로 바꿈)
+				if (running = !checkWin()) {
+					turn = COLOR_WHITE;
+					turnCount += 1;
+					updateStatusMsg();
+				}
+			}
+			updateCanvas();
+		} else if (turn == COLOR_WHITE && goStones[y][x].color != COLOR_BLACK) {
+			goStones[y][x].setColor(turn);
+			stack.push(new goStone(x, y, turn));
 			// 승리 체크 (한쪽이 승리한 경우 running을 false로 바꿈)
 			if (running = !checkWin()) {
-				turn == COLOR_BLACK ? turn = COLOR_WHITE : turn = COLOR_BLACK
+				turn = COLOR_BLACK;
 				turnCount += 1;
+				updateStatusMsg();
 			}
-			update();
+			updateCanvas();
 		} else {
-			status.innerHTML = "이미 바둑돌을 놓은 위치에는 바둑돌을 놓을 수 없습니다.";
+			if (turn == COLOR_BLACK && goStones[y][x].color == COLOR_FORBIDDEN) {
+				status.innerHTML = "해당 자리는 3-3 금수이므로 돌을 놓을 수 없습니다.";
+				setTimeout(() => updateStatusMsg(), 2000);
+			} else {
+				status.innerHTML = "이미 바둑돌을 놓은 위치에는 바둑돌을 놓을 수 없습니다.";
+				setTimeout(() => updateStatusMsg(), 2000);
+			}
 		}
 	} else {
 		status.innerHTML = "바둑돌을 놓을 수 있는 위치가 아닙니다.";
+		setTimeout(() => updateStatusMsg(), 2000);
 	}
 }
 
@@ -240,6 +447,7 @@ function undo() {
 		goStones[lastStone.y][lastStone.x].setColor(COLOR_NONE);
 		turn == COLOR_BLACK ? turn = COLOR_WHITE : turn = COLOR_BLACK;
 		turnCount -= 1;
-		update();
+		updateCanvas();
+		updateStatusMsg();
 	}
 }
