@@ -1,6 +1,6 @@
 // 렌주룰 기반으로 구현
 // 흑돌의 경우 완전한 오목만 승리할 수 있도록 checkWin 함수 수정 필요
-// 3-3 금수 판정 수정 중, 4-4 금수 판정, 장목 금수 판정, 3-3 거짓 금수 판정 구현 남음
+// 4-4 금수 판정, 장목 금수 판정, 3-3 거짓 금수 판정 구현 남음
 
 // 오목판에 놓여질 돌
 class GoStone {
@@ -40,12 +40,12 @@ undoBtn.addEventListener("click", undo);
 
 // 게임 초기화
 function init() {
-	for (let y = 1; y <= 15; y++) {
-		for (let x = 1; x <= 15; x++) {
+	for (let y = 1; y < 16; y++) {
+		for (let x = 1; x < 16; x++) {
 			board[y][x] = new GoStone(x, y, COLOR_NONE);
 		}
 	}
-	checkSamSam();
+	checkForbidden();
 	updateCanvas();
 	turn = COLOR_BLACK;
 	turnCount = 1;
@@ -93,6 +93,7 @@ function updateCanvas() {
 	// 바둑판 그리기
 	ctx.fillStyle = "black";
 	ctx.strokeStyle = "black";
+	ctx.lineWidth = 1;
 	for (let y = 1; y < 15; y++) {
 		for (let x = 1; x < 15; x++) {
 			ctx.strokeRect(40 * y, 40 * x, 40, 40);
@@ -107,8 +108,8 @@ function updateCanvas() {
 	}
 
 	// 오목판에 돌을 그려줌
-	for (let y = 1; y <= 15; y++) {
-		for (let x = 1; x <= 15; x++) {
+	for (let y = 1; y < 16; y++) {
+		for (let x = 1; x < 16; x++) {
 			if (board[y][x].color == COLOR_BLACK) drawBlack(x, y);
 			else if (board[y][x].color == COLOR_WHITE) drawWhite(x, y);
 			// 흑돌 차례일 때만 금수 표시를 그려줌
@@ -137,8 +138,8 @@ function updateStatusMsg() {
 
 // 승리 체크 함수 (승리한 플레이어가 있을 시 true 반환)
 function checkWin() {
-	for (let y = 1; y <= 15; y++) {
-		for (let x = 1; x <= 15; x++) {
+	for (let y = 1; y < 16; y++) {
+		for (let x = 1; x < 16; x++) {
 			// 바둑돌이 놓여진 곳이라면 승리 조건 체크 시작
 			if (board[y][x].color == COLOR_BLACK || board[y][x].color == COLOR_WHITE) {
 				if (checkHori(x, y) || checkVert(x, y) || checkRtlb(x, y) || checkLtrb(x, y)) {
@@ -166,6 +167,7 @@ function checkHori(x, y) {
 	for (let i = 1; i < 5; i++) {
 		if (board[y][x + i].color != target) return false;
 	}
+
 	return true;
 }
 
@@ -177,6 +179,7 @@ function checkVert(x, y) {
 	for (let i = 1; i < 5; i++) {
 		if (board[y + i][x].color != target) return false;
 	}
+
 	return true;
 }
 
@@ -188,6 +191,7 @@ function checkRtlb(x, y) {
 	for (let i = 1; i < 5; i++) {
 		if (board[y - i][x + i].color != target) return false;
 	}
+
 	return true;
 }
 
@@ -199,13 +203,15 @@ function checkLtrb(x, y) {
 	for (let i = 1; i < 5; i++) {
 		if (board[y + i][x + i].color != target) return false;
 	}
+
 	return true;
 }
 
-// 3-3 금수 체크
-function checkSamSam() {
-	let forbidden = []
+// 금수 체크
+function checkForbidden() {
+	let forbidden = [];
 
+	// 오목판에 금수 체크가 없도록 초기화
 	for (let y = 1; y < 16; y++) {
 		for (let x = 1; x < 16; x++) {
 			if (board[y][x].color == COLOR_FORBIDDEN) board[y][x].setColor(COLOR_NONE);
@@ -216,7 +222,12 @@ function checkSamSam() {
 		for (let x = 1; x < 16; x++) {
 			if (board[y][x].color == COLOR_NONE) {
 				board[y][x].setColor(COLOR_BLACK);
+				// 열린 3이 2개 이상 있을 시 금수에 추가 (3-3 금수)
 				if (checkOpenHoriSam(x, y) + checkOpenVertSam(x, y) + checkOpenRtlbSam(x, y) + checkOpenLtrbSam(x, y) >= 2) {
+					forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
+				}
+				// 6목이 만들어질 시 금수에 추가
+				if (checkHoriJangmok(x, y) || checkVertJangmok(x, y) || checkRtlbJangmok(x, y) || checkLtrbJangmok(x, y)) {
 					forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
 				}
 				board[y][x].setColor(COLOR_NONE);
@@ -227,6 +238,147 @@ function checkSamSam() {
 	for (let i = 0; i < forbidden.length; i++) {
 		board[forbidden[i].y][forbidden[i].x].setColor(COLOR_FORBIDDEN);
 	}
+}
+
+// 가로 방향 장목 체크
+function checkHoriJangmok(x, y) {
+	let cnt_black = 1;
+
+	// 가로 좌 방향 체크
+	let _x = x - 1;
+	while (true) {
+		if (_x == 0) break;
+		if (board[y][_x].color == COLOR_BLACK) {
+			cnt_black += 1;
+		} else {
+			break;
+		}
+		_x -= 1;
+	}
+
+	// 가로 우 방향 체크
+	_x = x + 1;
+	while (true) {
+		if (_x == 16) break;
+		if (board[y][_x].color == COLOR_BLACK) {
+			cnt_black += 1;
+		} else {
+			break;
+		}
+		_x += 1;
+	}
+
+	if (cnt_black > 5) return true;
+	else return false;
+}
+
+// 세로 방향 장목 체크
+function checkVertJangmok(x, y) {
+	let cnt_black = 1;
+
+	// 세로 상 방향 체크
+	let _y = y - 1;
+	while (true) {
+		if (_y == 0) break;
+		if (board[_y][x].color == COLOR_BLACK) {
+			cnt_black += 1;
+		} else {
+			break;
+		}
+		_y -= 1;
+	}
+
+	// 세로 하 방향 체크
+	_y = y + 1;
+	while (true) {
+		if (_y == 16) break;
+		if (board[_y][x].color == COLOR_BLACK) {
+			cnt_black += 1;
+		} else {
+			break;
+		}
+		_y += 1;
+	}
+
+	if (cnt_black > 5) return true;
+	else return false;
+}
+
+// / 방향 장목 체크
+function checkRtlbJangmok(x, y) {
+	let cnt_black = 1;
+
+	// / 오른쪽 방향 체크
+	let _x = x + 1;
+	let _y = y - 1;
+	while (true) {
+		if (_x == 16) break;
+		if (_y == 0) break;
+		if (board[_y][_x].color == COLOR_BLACK) {
+			cnt_black += 1;
+		} else {
+			break;
+		}
+		_x += 1;
+		_y -= 1;
+	}
+
+	// / 왼쪽 방향 체크
+	_x = x - 1;
+	_y = y + 1;
+	while (true) {
+		if (_x == 0) break;
+		if (_y == 16) break;
+		if (board[_y][x].color == COLOR_BLACK) {
+			cnt_black += 1;
+		} else {
+			break;
+		}
+		_x -= 1;
+		_y += 1;
+	}
+
+	if (cnt_black > 5) return true;
+	else return false;
+}
+
+
+// \ 방향 장목 체크
+function checkLtrbJangmok(x, y) {
+	let cnt_black = 1;
+
+	// / 오른쪽 방향 체크
+	let _x = x + 1;
+	let _y = y + 1;
+	while (true) {
+		if (_x == 16) break;
+		if (_y == 16) break;
+		if (board[_y][_x].color == COLOR_BLACK) {
+			cnt_black += 1;
+		} else {
+			break;
+		}
+		_x += 1;
+		_y += 1;
+	}
+
+	// / 왼쪽 방향 체크
+	_x = x - 1;
+	_y = y - 1;
+	while (true) {
+		if (_x == 0) break;
+		if (_y == 0) break;
+		if (board[_y][x].color == COLOR_BLACK) {
+			cnt_black += 1;
+		} else {
+			break;
+		}
+		_x -= 1;
+		_y -= 1;
+	}
+
+	if (cnt_black > 5) return true;
+	else return false;
 }
 
 // 가로 방향 열린 3 체크
@@ -608,7 +760,7 @@ function placeStone(event) {
 	let y = Math.round((event.clientY - rect.top) / 40);
 
 	// 어떤 바둑돌도 놓여지지 않은 위치라면 바둑돌을 놓을 수 있도록 함
-	if (x >= 1 && x <= 15 && y >= 1 && y <= 15) {
+	if (x >= 1 && x < 16 && y >= 1 && y < 16) {
 		if (board[y][x].color == COLOR_NONE) {
 			board[y][x].setColor(turn);
 			stack.push(new GoStone(x, y, turn));
@@ -616,7 +768,7 @@ function placeStone(event) {
 			if (running = !checkWin()) {
 				turn == COLOR_BLACK ? turn = COLOR_WHITE : turn = COLOR_BLACK;
 				// 흑돌 차례가 올 때 미리 3-3 금수 체크를 함
-				if (turn == COLOR_WHITE) checkSamSam();
+				if (turn == COLOR_BLACK) checkForbidden();
 				turnCount += 1;
 				updateStatusMsg();
 			}
@@ -647,7 +799,7 @@ function undo() {
 		let lastStone = stack.pop();
 		board[lastStone.y][lastStone.x].setColor(COLOR_NONE);
 		turn == COLOR_BLACK ? turn = COLOR_WHITE : turn = COLOR_BLACK;
-		if (turn == COLOR_BLACK) checkSamSam();
+		if (turn == COLOR_BLACK) checkForbidden();
 		turnCount -= 1;
 		updateCanvas();
 		updateStatusMsg();
