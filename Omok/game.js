@@ -1,5 +1,5 @@
 // 렌주룰 기반으로 구현
-// 4-4 금수 판정, 3-3 거짓 금수 판정 구현 남음
+// 한 방향으로 중첩된 4-4 금수 판정, 3-3 거짓 금수 판정 구현 남음
 
 // 오목판에 놓여질 돌
 class GoStone {
@@ -287,12 +287,17 @@ function checkForbidden() {
         for (let x = 1; x < 16; x++) {
             if (board[y][x].color == COLOR_NONE) {
                 board[y][x].setColor(COLOR_BLACK);
-                // 열린 3이 2개 이상 있을 시 금수에 추가 (3-3 금수)
-                if (checkOpenHoriSam(x, y) + checkOpenVertSam(x, y) + checkOpenRtlbSam(x, y) + checkOpenLtrbSam(x, y) >= 2) {
-                    forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
-                }
-                // 완전한 오목이 만들어질 일 없이 육목이 만들어질 시 금수에 추가
+                // 완전한 오목이 만들어지지 않으면 금수 체크
                 if (!checkHori(x, y, COLOR_BLACK) && !checkVert(x, y, COLOR_BLACK) && !checkRtlb(x, y, COLOR_BLACK) && !checkLtrb(x, y, COLOR_BLACK)) {
+                    // 열린 3이 2개 이상 있을 시 금수에 추가 (3-3 금수)
+                    if (checkOpenHoriSam(x, y) + checkOpenVertSam(x, y) + checkOpenRtlbSam(x, y) + checkOpenLtrbSam(x, y) >= 2) {
+                        forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
+                    }
+                    // 4가 2개 이상 있을 시 금수에 추가 (4-4 금수)
+                    if (checkHoriSa(x, y) + checkVertSa(x, y) + checkRtlbSa(x, y) + checkLtrbSa(x, y) >= 2) {
+                        forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
+                    }
+                    // 6목 이상 만들어질 시 금수에 추가 (장목 금수)
                     if (checkHoriJangmok(x, y) || checkVertJangmok(x, y) || checkRtlbJangmok(x, y) || checkLtrbJangmok(x, y)) {
                         forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
                     }
@@ -791,6 +796,338 @@ function checkOpenLtrbSam(x, y) {
         if (x - cnt_upleft - 2 > 0 && y - cnt_upleft - 2 > 0 && board[y - cnt_upleft - 2][x - cnt_upleft - 2].color == COLOR_WHITE) return false;
     }
 
+    return true;
+}
+
+// 가로 방향 4 체크
+function checkHoriSa(x, y) {
+    let cnt_black = 1;
+    let cnt_left = 0;
+    let cnt_right = 0;
+    let cnt_none = 0;
+
+    // 가로 좌 방향 체크
+    let prev = board[y][x];
+    let _x = x - 1;
+    while (true) {
+        cnt_left += 1;
+        if (_x == 0) {
+            if (board[y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[y][_x].color == COLOR_WHITE || board[y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[y][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_left -= 1;
+            }
+            cnt_left -= 1;
+            break;
+        } else if (board[y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 두 개 이상이면 안됨
+            if (cnt_none == 2) {
+                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                cnt_none -= 1;
+                cnt_left -= 1;
+                break;
+            }
+        }
+        prev = board[y][_x];
+        _x -= 1;
+    }
+
+    // 가로 우 방향 체크
+    prev = board[y][x];
+    _x = x + 1;
+    while (true) {
+        cnt_right += 1;
+        if (_x == 16) {
+            if (board[y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[y][_x].color == COLOR_WHITE || board[y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[y][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_right -= 1;
+            }
+            cnt_right -= 1;
+            break;
+        } else if (board[y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 두 개 이상이면 안됨
+            if (cnt_none == 2) {
+                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                cnt_none -= 1;
+                cnt_right -= 1;
+                break;
+            }
+        }
+        prev = board[y][_x];
+        _x += 1;
+    }
+
+    // 흑돌 갯수가 4가 아니면 4가 아님
+    if (cnt_black != 4) return false;
+    return true;
+}
+
+// 세로 방향 4 체크
+function checkVertSa(x, y) {
+    let cnt_black = 1;
+    let cnt_up = 0;
+    let cnt_down = 0;
+    let cnt_none = 0;
+
+    // 세로 상 방향 체크
+    let prev = board[y][x];
+    let _y = y - 1;
+    while (true) {
+        cnt_up += 1;
+        if (_y == 0) {
+            if (board[_y + 1][x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][x].color == COLOR_WHITE || board[_y][x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y + 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_up -= 1;
+            }
+            cnt_up -= 1;
+            break;
+        } else if (board[_y][x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 두 개 이상이면 안됨
+            if (cnt_none == 2) {
+                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                cnt_none -= 1;
+                cnt_up -= 1;
+                break;
+            }
+        }
+        prev = board[_y][x];
+        _y -= 1;
+    }
+
+    // 세로 하 방향 체크
+    prev = board[y][x];
+    _y = y + 1;
+    while (true) {
+        cnt_down += 1;
+        if (_y == 16) {
+            if (board[_y - 1][x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][x].color == COLOR_WHITE || board[_y][x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y - 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_down -= 1;
+            }
+            cnt_down -= 1;
+            break;
+        } else if (board[_y][x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 두 개 이상이면 안됨
+            if (cnt_none == 2) {
+                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                cnt_none -= 1;
+                cnt_down -= 1;
+                break;
+            }
+        }
+        prev = board[_y][x];
+        _y += 1;
+    }
+
+    // 흑돌 갯수가 4가 아니면 4가 아님
+    if (cnt_black != 4) return false;
+    return true;
+}
+
+// / 방향 4 체크
+function checkRtlbSa(x, y) {
+    let cnt_black = 1;
+    let cnt_upright = 0;
+    let cnt_downleft = 0;
+    let cnt_none = 0;
+
+    // / 오른쪽 방향 체크
+    let prev = board[y][x];
+    let _x = x + 1;
+    let _y = y - 1;
+    while (true) {
+        cnt_upright += 1;
+        if (_x == 16) {
+            if (_y > 0 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        } else if (_y == 0) {
+            if (_x < 16 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][_x].color == COLOR_WHITE || board[_y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y + 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upright -= 1;
+            }
+            cnt_upright -= 1;
+            break;
+        } else if (board[_y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 두 개 이상이면 안됨
+            if (cnt_none == 2) {
+                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                cnt_none -= 1;
+                cnt_upright -= 1;
+                break;
+            }
+        }
+        prev = board[_y][_x];
+        _x += 1;
+        _y -= 1;
+    }
+
+    // / 왼쪽 방향 체크
+    prev = board[y][x];
+    _x = x - 1;
+    _y = y + 1;
+    while (true) {
+        cnt_downleft += 1;
+        if (_x == 0) {
+            if (_y < 16 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        } else if (_y == 16) {
+            if (_x > 0 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][_x].color == COLOR_WHITE || board[_y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y - 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downleft -= 1;
+            }
+            cnt_downleft -= 1;
+            break;
+        } else if (board[_y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 두 개 이상이면 안됨
+            if (cnt_none == 2) {
+                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                cnt_none -= 1;
+                cnt_downleft -= 1;
+                break;
+            }
+        }
+        prev = board[_y][_x];
+        _x -= 1;
+        _y += 1;
+    }
+
+    // 흑돌 갯수가 4가 아니면 4가 아님
+    if (cnt_black != 4) return false;
+    return true;
+}
+
+// \ 방향 4 체크
+function checkLtrbSa(x, y) {
+    let cnt_black = 1;
+    let cnt_downright = 0;
+    let cnt_upleft = 0;
+    let cnt_none = 0;
+
+    // \ 오른쪽 방향 체크
+    let prev = board[y][x];
+    let _x = x + 1;
+    let _y = y + 1;
+    while (true) {
+        cnt_downright += 1;
+        if (_x == 16) {
+            if (_y < 16 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        } else if (_y == 16) {
+            if (_x < 16 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][_x].color == COLOR_WHITE || board[_y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y - 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downright -= 1;
+            }
+            cnt_downright -= 1;
+            break;
+        } else if (board[_y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 두 개 이상이면 안됨
+            if (cnt_none == 2) {
+                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                cnt_none -= 1;
+                cnt_downright -= 1;
+                break;
+            }
+        }
+        prev = board[_y][_x];
+        _x += 1;
+        _y += 1;
+    }
+
+    // \ 왼쪽 방향 체크
+    prev = board[y][x];
+    _x = x - 1;
+    _y = y - 1;
+    while (true) {
+        cnt_upleft += 1;
+        if (_x == 0) {
+            if (_y > 0 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        } else if (_y == 0) {
+            if (_x > 0 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][_x].color == COLOR_WHITE || board[_y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y + 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upleft -= 1;
+            }
+            cnt_upleft -= 1;
+            break;
+        } else if (board[_y][_x].color == COLOR_NONE) {
+            cnt_none += 1
+            // 빈 공간이 두 개 이상이면 안됨
+            if (cnt_none == 2) {
+                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                cnt_none -= 1;
+                cnt_upleft -= 1;
+                break;
+            }
+        }
+        prev = board[_y][_x];
+        _x -= 1;
+        _y -= 1;
+    }
+
+    // 흑돌 갯수가 4가 아니면 4가 아님
+    if (cnt_black != 4) return false;
     return true;
 }
 
