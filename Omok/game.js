@@ -297,6 +297,10 @@ function checkForbidden() {
                     if (checkHoriSa(x, y) + checkVertSa(x, y) + checkRtlbSa(x, y) + checkLtrbSa(x, y) >= 2) {
                         forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
                     }
+                    // 한 방향으로 중첩된 4가 2개 이상 있을 시 금수에 추가 (4-4 금수)
+                    if (checkHoriNestedSa(x, y) || checkVertNestedSa(x, y) || checkRtlbNestedSa(x, y) || checkLtrbNestedSa(x, y)) {
+                        forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
+                    }
                     // 6목 이상 만들어질 시 금수에 추가 (장목 금수)
                     if (checkHoriJangmok(x, y) || checkVertJangmok(x, y) || checkRtlbJangmok(x, y) || checkLtrbJangmok(x, y)) {
                         forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
@@ -460,7 +464,7 @@ function checkOpenHoriSam(x, y) {
             // 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
-                cnt_left -= 1;
+                cnt_left -= 2;
                 break;
             }
         }
@@ -492,7 +496,7 @@ function checkOpenHoriSam(x, y) {
             // 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
-                cnt_right -= 1;
+                cnt_right -= 2;
                 break;
             }
         }
@@ -547,7 +551,7 @@ function checkOpenVertSam(x, y) {
             // 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
-                cnt_up -= 1;
+                cnt_up -= 2;
                 break;
             }
         }
@@ -579,7 +583,7 @@ function checkOpenVertSam(x, y) {
             // 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
-                cnt_down -= 1;
+                cnt_down -= 2;
                 break;
             }
         }
@@ -638,7 +642,7 @@ function checkOpenRtlbSam(x, y) {
             // 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
-                cnt_upright -= 1;
+                cnt_upright -= 2;
                 break;
             }
         }
@@ -675,7 +679,7 @@ function checkOpenRtlbSam(x, y) {
             // 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
-                cnt_downleft -= 1;
+                cnt_downleft -= 2;
                 break;
             }
         }
@@ -736,7 +740,7 @@ function checkOpenLtrbSam(x, y) {
             // 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
-                cnt_downright -= 1;
+                cnt_downright -= 2;
                 break;
             }
         }
@@ -773,7 +777,7 @@ function checkOpenLtrbSam(x, y) {
             // 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
-                cnt_upleft -= 1;
+                cnt_upleft -= 2;
                 break;
             }
         }
@@ -829,7 +833,10 @@ function checkHoriSa(x, y) {
             cnt_none += 1;
             // 빈 공간이 두 개 이상이면 안됨
             if (cnt_none == 2) {
-                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                if (prev.color == COLOR_NONE) {
+                    cnt_none -= 1;
+                    cnt_left -= 1;
+                }
                 cnt_none -= 1;
                 cnt_left -= 1;
                 break;
@@ -862,7 +869,10 @@ function checkHoriSa(x, y) {
             cnt_none += 1;
             // 빈 공간이 두 개 이상이면 안됨
             if (cnt_none == 2) {
-                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                if (prev.color == COLOR_NONE) {
+                    cnt_none -= 1;
+                    cnt_right -= 1;
+                }
                 cnt_none -= 1;
                 cnt_right -= 1;
                 break;
@@ -907,7 +917,10 @@ function checkVertSa(x, y) {
             cnt_none += 1;
             // 빈 공간이 두 개 이상이면 안됨
             if (cnt_none == 2) {
-                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                if (prev.color == COLOR_NONE) {
+                    cnt_none -= 1;
+                    cnt_up -= 1;
+                }
                 cnt_none -= 1;
                 cnt_up -= 1;
                 break;
@@ -940,7 +953,10 @@ function checkVertSa(x, y) {
             cnt_none += 1;
             // 빈 공간이 두 개 이상이면 안됨
             if (cnt_none == 2) {
-                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                if (prev.color == COLOR_NONE) {
+                    cnt_none -= 1;
+                    cnt_down -= 1;
+                }
                 cnt_none -= 1;
                 cnt_down -= 1;
                 break;
@@ -989,7 +1005,10 @@ function checkRtlbSa(x, y) {
             cnt_none += 1;
             // 빈 공간이 두 개 이상이면 안됨
             if (cnt_none == 2) {
-                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                if (prev.color == COLOR_NONE) {
+                    cnt_none -= 1;
+                    cnt_upright -= 1;
+                }
                 cnt_none -= 1;
                 cnt_upright -= 1;
                 break;
@@ -1027,7 +1046,10 @@ function checkRtlbSa(x, y) {
             cnt_none += 1;
             // 빈 공간이 두 개 이상이면 안됨
             if (cnt_none == 2) {
-                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                if (prev.color == COLOR_NONE) {
+                    cnt_none -= 1;
+                    cnt_downleft -= 1;
+                }
                 cnt_none -= 1;
                 cnt_downleft -= 1;
                 break;
@@ -1077,7 +1099,10 @@ function checkLtrbSa(x, y) {
             cnt_none += 1;
             // 빈 공간이 두 개 이상이면 안됨
             if (cnt_none == 2) {
-                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                if (prev.color == COLOR_NONE) {
+                    cnt_none -= 1;
+                    cnt_downright -= 1;
+                }
                 cnt_none -= 1;
                 cnt_downright -= 1;
                 break;
@@ -1115,7 +1140,10 @@ function checkLtrbSa(x, y) {
             cnt_none += 1
             // 빈 공간이 두 개 이상이면 안됨
             if (cnt_none == 2) {
-                if (prev.color == COLOR_NONE) cnt_none -= 1;
+                if (prev.color == COLOR_NONE) {
+                    cnt_none -= 1;
+                    cnt_upleft -= 1;
+                }
                 cnt_none -= 1;
                 cnt_upleft -= 1;
                 break;
@@ -1129,6 +1157,374 @@ function checkLtrbSa(x, y) {
     // 흑돌 갯수가 4가 아니면 4가 아님
     if (cnt_black != 4) return false;
     return true;
+}
+
+// 가로 방향 중첩된 4 체크
+function checkHoriNestedSa(x, y) {
+    let cnt_black = 1;
+    let cnt_left = 0;
+    let cnt_right = 0;
+    let cnt_none = 0;
+
+    // 가로 좌 방향 체크
+    let prev = board[y][x];
+    let _x = x - 1;
+    while (true) {
+        cnt_left += 1;
+        if (_x == 0) {
+            if (board[y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[y][_x].color == COLOR_WHITE || board[y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[y][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_left -= 1;
+            }
+            cnt_left -= 1;
+            break;
+        } else if (board[y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간을 연달아 두 칸 만나면 탐색 중지
+            if (prev.color == COLOR_NONE) {
+                cnt_none -= 2;
+                cnt_left -= 2;
+                break;
+            }
+        }
+        prev = board[y][_x];
+        _x -= 1;
+    }
+
+    // 가로 우 방향 체크
+    prev = board[y][x];
+    _x = x + 1;
+    while (true) {
+        cnt_right += 1;
+        if (_x == 16) {
+            if (board[y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[y][_x].color == COLOR_WHITE || board[y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[y][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_right -= 1;
+            }
+            cnt_right -= 1;
+            break;
+        } else if (board[y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간을 연달아 두 칸 만나면 탐색 중지
+            if (prev.color == COLOR_NONE) {
+                cnt_none -= 2;
+                cnt_right -= 2;
+                break;
+            }
+        }
+        prev = board[y][_x];
+        _x += 1;
+    }
+
+    if (cnt_none != 2) return false;
+
+    // ● ●●● ●
+    if (cnt_black == 5) {
+        if (board[y][x - cnt_left + 1].color == COLOR_NONE && board[y][x + cnt_right - 1].color == COLOR_NONE) return true;
+        // ●● ●● ●●
+    } else if (cnt_black == 6) {
+        if (board[y][x - cnt_left + 2].color == COLOR_NONE && board[y][x + cnt_right - 2].color == COLOR_NONE) return true;
+        // ●●● ● ●●●
+    } else if (cnt_black == 7) {
+        if (board[y][x - cnt_left + 3].color == COLOR_NONE && board[y][x + cnt_right - 3].color == COLOR_NONE) return true;
+    }
+
+    return false;
+}
+
+// 세로 방향 중첩된 4 체크
+function checkVertNestedSa(x, y) {
+    let cnt_black = 1;
+    let cnt_up = 0;
+    let cnt_down = 0;
+    let cnt_none = 0;
+
+    // 세로 상 방향 체크
+    let prev = board[y][x];
+    let _y = y - 1;
+    while (true) {
+        cnt_up += 1;
+        if (_y == 0) {
+            if (board[_y + 1][x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][x].color == COLOR_WHITE || board[_y][x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y + 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_up -= 1;
+            }
+            cnt_up -= 1;
+            break;
+        } else if (board[_y][x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간을 연달아 두 칸 만나면 탐색 중지
+            if (prev.color == COLOR_NONE) {
+                cnt_none -= 2;
+                cnt_up -= 2;
+                break;
+            }
+        }
+        prev = board[_y][x];
+        _y -= 1;
+    }
+
+    // 세로 하 방향 체크
+    prev = board[y][x];
+    _y = y + 1;
+    while (true) {
+        cnt_down += 1;
+        if (_y == 16) {
+            if (board[_y - 1][x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][x].color == COLOR_WHITE || board[_y][x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y - 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_down -= 1;
+            }
+            cnt_down -= 1;
+            break;
+        } else if (board[_y][x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간을 연달아 두 칸 만나면 탐색 중지
+            if (prev.color == COLOR_NONE) {
+                cnt_none -= 2;
+                cnt_down -= 2;
+                break;
+            }
+        }
+        prev = board[_y][x];
+        _y += 1;
+    }
+
+    if (cnt_none != 2) return false;
+
+    // ● ●●● ●
+    if (cnt_black == 5) {
+        if (board[y - cnt_up + 1][x].color == COLOR_NONE && board[y + cnt_down - 1][x].color == COLOR_NONE) return true;
+        // ●● ●● ●●
+    } else if (cnt_black == 6) {
+        if (board[y - cnt_up + 2][x].color == COLOR_NONE && board[y + cnt_down - 2][x].color == COLOR_NONE) return true;
+        // ●●● ● ●●●
+    } else if (cnt_black == 7) {
+        if (board[y - cnt_up + 3][x].color == COLOR_NONE && board[y + cnt_down + 3][x].color == COLOR_NONE) return true;
+    }
+
+    return false;
+}
+
+// / 방향 중첩된 4 체크
+function checkRtlbNestedSa(x, y) {
+    let cnt_black = 1;
+    let cnt_upright = 0;
+    let cnt_downleft = 0;
+    let cnt_none = 0;
+
+    // / 오른쪽 방향 체크
+    let prev = board[y][x];
+    let _x = x + 1;
+    let _y = y - 1;
+    while (true) {
+        cnt_upright += 1;
+        if (_x == 16) {
+            if (_y > 0 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        } else if (_y == 0) {
+            if (_x < 16 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][_x].color == COLOR_WHITE || board[_y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y + 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upright -= 1;
+            }
+            cnt_upright -= 1;
+            break;
+        } else if (board[_y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 2개 연속이면 중단
+            if (prev.color == COLOR_NONE) {
+                cnt_none -= 2;
+                cnt_upright -= 2;
+                break;
+            }
+        }
+        prev = board[_y][_x];
+        _x += 1;
+        _y -= 1;
+    }
+
+    // / 왼쪽 방향 체크
+    prev = board[y][x];
+    _x = x - 1;
+    _y = y + 1;
+    while (true) {
+        cnt_downleft += 1;
+        if (_x == 0) {
+            if (_y < 16 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        } else if (_y == 16) {
+            if (_x > 0 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][_x].color == COLOR_WHITE || board[_y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y - 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downleft -= 1;
+            }
+            cnt_downleft -= 1;
+            break;
+        } else if (board[_y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 2개 연속이면 중단
+            if (prev.color == COLOR_NONE) {
+                cnt_none -= 2;
+                cnt_downleft -= 2;
+                break;
+            }
+        }
+        prev = board[_y][_x];
+        _x -= 1;
+        _y += 1;
+    }
+
+    if (cnt_none != 2) return false;
+
+    // ● ●●● ●
+    if (cnt_black == 5) {
+        if (board[y - cnt_upright + 1][x + cnt_upright - 1].color == COLOR_NONE && board[y + cnt_downleft - 1][x - cnt_downleft + 1].color == COLOR_NONE) return true;
+        // ●● ●● ●●
+    } else if (cnt_black == 6) {
+        if (board[y - cnt_upright + 2][x + cnt_upright - 2].color == COLOR_NONE && board[y + cnt_downleft - 2][x - cnt_downleft + 2].color == COLOR_NONE) return true;
+        // ●●● ● ●●●
+    } else if (cnt_black == 7) {
+        if (board[y - cnt_upright + 3][x + cnt_upright - 3].color == COLOR_NONE && board[y + cnt_downleft - 3][x - cnt_downleft + 3].color == COLOR_NONE) return true;
+    }
+
+    return false;
+}
+
+// \ 방향 중첩된 4 체크
+function checkLtrbNestedSa(x, y) {
+    let cnt_black = 1;
+    let cnt_downright = 0;
+    let cnt_upleft = 0;
+    let cnt_none = 0;
+
+    // \ 오른쪽 방향 체크
+    let prev = board[y][x];
+    let _x = x + 1;
+    let _y = y + 1;
+    while (true) {
+        cnt_downright += 1;
+        if (_x == 16) {
+            if (_y < 16 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        } else if (_y == 16) {
+            if (_x < 16 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][_x].color == COLOR_WHITE || board[_y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y - 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downright -= 1;
+            }
+            cnt_downright -= 1;
+            break;
+        } else if (board[_y][_x].color == COLOR_NONE) {
+            cnt_none += 1;
+            // 빈 공간이 두 개 이상이면 안됨
+            if (prev.color == COLOR_NONE) {
+                cnt_none -= 2;
+                cnt_downright -= 2;
+                break;
+            }
+        }
+        prev = board[_y][_x];
+        _x += 1;
+        _y += 1;
+    }
+
+    // \ 왼쪽 방향 체크
+    prev = board[y][x];
+    _x = x - 1;
+    _y = y - 1;
+    while (true) {
+        cnt_upleft += 1;
+        if (_x == 0) {
+            if (_y > 0 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        } else if (_y == 0) {
+            if (_x > 0 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+            break;
+        }
+        if (board[_y][_x].color == COLOR_BLACK) {
+            cnt_black += 1;
+        } else if (board[_y][_x].color == COLOR_WHITE || board[_y][_x].color == COLOR_FORBIDDEN) {
+            // 중간에 빈 공간이 끼어 있을 경우
+            if (board[_y + 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upleft -= 1;
+            }
+            cnt_upleft -= 1;
+            break;
+        } else if (board[_y][_x].color == COLOR_NONE) {
+            cnt_none += 1
+            // 빈 공간이 두 개 이상이면 안됨
+            if (prev.color == COLOR_NONE) {
+                cnt_none -= 2;
+                cnt_upleft -= 2;
+                break;
+            }
+        }
+        prev = board[_y][_x];
+        _x -= 1;
+        _y -= 1;
+    }
+
+    if (cnt_none != 2) return false;
+
+    // ● ●●● ●
+    if (cnt_black == 5) {
+        if (board[y + cnt_downright + 1][x + cnt_downright + 1].color == COLOR_NONE && board[y - cnt_upleft - 1][x - cnt_upleft - 1].color == COLOR_NONE) return true;
+        // ●● ●● ●●
+    } else if (cnt_black == 6) {
+        if (board[y + cnt_downright + 2][x + cnt_downright + 2].color == COLOR_NONE && board[y - cnt_upleft - 2][x - cnt_upleft - 2].color == COLOR_NONE) return true;
+        // ●●● ● ●●●
+    } else if (cnt_black == 7) {
+        if (board[y + cnt_downright + 3][x + cnt_downright + 3].color == COLOR_NONE && board[y - cnt_upleft - 3][x - cnt_upleft - 3].color == COLOR_NONE) return true;
+    }
+
+    return false;
 }
 
 function placeStone(event) {
