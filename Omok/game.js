@@ -1,5 +1,5 @@
 // 렌주룰 기반으로 구현
-// 한 방향으로 중첩된 4-4 금수 판정, 3-3 거짓 금수 판정 구현 남음
+// 남은 과제 : 3-3 거짓 금수 판정
 
 // 오목판에 놓여질 돌
 class GoStone {
@@ -54,7 +54,7 @@ function init() {
 function drawBlack(x, y) {
     ctx.fillStyle = "black";
     ctx.beginPath();
-    ctx.arc(x * 40, y * 40, 18, 0, Math.PI * 2, true);
+    ctx.arc(x * 30, y * 30, 14, 0, Math.PI * 2, true);
     ctx.fill();
     ctx.closePath();
 }
@@ -65,7 +65,7 @@ function drawWhite(x, y) {
     ctx.strokeStyle = "black";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(x * 40, y * 40, 18, 0, Math.PI * 2, true);
+    ctx.arc(x * 30, y * 30, 14, 0, Math.PI * 2, true);
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
@@ -77,10 +77,10 @@ function drawForbidden(x, y) {
     ctx.strokeStyle = "red";
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(x * 40, y * 40 - 18);
-    ctx.lineTo(x * 40 + 18, y * 40 + 18);
-    ctx.lineTo(x * 40 - 18, y * 40 + 18)
-    ctx.lineTo(x * 40, y * 40 - 18);
+    ctx.moveTo(x * 30, y * 30 - 14);
+    ctx.lineTo(x * 30 + 14, y * 30 + 14);
+    ctx.lineTo(x * 30 - 14, y * 30 + 14)
+    ctx.lineTo(x * 30, y * 30 - 14);
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
@@ -95,11 +95,11 @@ function updateCanvas() {
     ctx.lineWidth = 1;
     for (let y = 1; y < 15; y++) {
         for (let x = 1; x < 15; x++) {
-            ctx.strokeRect(40 * y, 40 * x, 40, 40);
+            ctx.strokeRect(30 * y, 30 * x, 30, 30);
             // 바둑판 중간중간에 구분점을 그려줌
             if ((y == 4 && x == 4) || (y == 4 && x == 12) || (y == 8 && x == 8) || (y == 12 && x == 4) || (y == 12 && x == 12)) {
                 ctx.beginPath();
-                ctx.arc(x * 40, y * 40, 3, 0, Math.PI * 2, true);
+                ctx.arc(x * 30, y * 30, 3, 0, Math.PI * 2, true);
                 ctx.fill();
                 ctx.closePath();
             }
@@ -122,7 +122,7 @@ function updateCanvas() {
             ctx.font = "bold 20px sans-serif";
             ctx.textAlign = "center";
             ctx.fillStyle = "red";
-            ctx.fillText(i + 1, stack[i].x * 40, stack[i].y * 40 + 7);
+            ctx.fillText(i + 1, stack[i].x * 30, stack[i].y * 30 + 7);
         }
     }
 }
@@ -214,8 +214,7 @@ function checkRtlb(x, y, color) {
     let _x = x + 1;
     let _y = y - 1;
     while (true) {
-        if (_x == 16) break;
-        if (_y == 0) break;
+        if (_x == 16 || _y == 0) break;
         if (board[_y][_x].color == color) cnt_color += 1;
         else break;
         _x += 1;
@@ -226,8 +225,7 @@ function checkRtlb(x, y, color) {
     _x = x - 1;
     _y = y + 1;
     while (true) {
-        if (_x == 0) break;
-        if (_y == 16) break;
+        if (_x == 0 || _y == 16) break;
         if (board[_y][_x].color == color) cnt_color += 1;
         else break;
         _x -= 1;
@@ -243,24 +241,22 @@ function checkRtlb(x, y, color) {
 function checkLtrb(x, y, color) {
     let cnt_color = 1;
 
-    // / 오른쪽 방향 체크
+    // \ 오른쪽 방향 체크
     let _x = x + 1;
     let _y = y + 1;
     while (true) {
-        if (_x == 16) break;
-        if (_y == 16) break;
+        if (_x == 16 || _y == 16) break;
         if (board[_y][_x].color == color) cnt_color += 1;
         else break;
         _x += 1;
         _y += 1;
     }
 
-    // / 왼쪽 방향 체크
+    // \ 왼쪽 방향 체크
     _x = x - 1;
     _y = y - 1;
     while (true) {
-        if (_x == 0) break;
-        if (_y == 0) break;
+        if (_x == 0 || _y == 0) break;
         if (board[_y][_x].color == color) cnt_color += 1;
         else break;
         _x -= 1;
@@ -292,14 +288,26 @@ function checkForbidden() {
                     // 열린 3이 2개 이상 있을 시 금수에 추가 (3-3 금수)
                     if (checkOpenHoriSam(x, y) + checkOpenVertSam(x, y) + checkOpenRtlbSam(x, y) + checkOpenLtrbSam(x, y) >= 2) {
                         forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
+                        if (checkOpenHoriSam(x, y)) console.log(y, x, "open hori 3");
+                        if (checkOpenVertSam(x, y)) console.log(y, x, "open vert 3");
+                        if (checkOpenRtlbSam(x, y)) console.log(y, x, "open rtlb 3");
+                        if (checkOpenLtrbSam(x, y)) console.log(y, x, "open ltrb 3");
                     }
                     // 4가 2개 이상 있을 시 금수에 추가 (4-4 금수)
                     if (checkHoriSa(x, y) + checkVertSa(x, y) + checkRtlbSa(x, y) + checkLtrbSa(x, y) >= 2) {
                         forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
+                        if (checkHoriSa(x, y)) console.log(y, x, "hori 4");
+                        if (checkVertSa(x, y)) console.log(y, x, "vert 4");
+                        if (checkRtlbSa(x, y)) console.log(y, x, "rtlb 4");
+                        if (checkLtrbSa(x, y)) console.log(y, x, "ltrb 4");
                     }
                     // 한 방향으로 중첩된 4가 2개 이상 있을 시 금수에 추가 (4-4 금수)
                     if (checkHoriNestedSa(x, y) || checkVertNestedSa(x, y) || checkRtlbNestedSa(x, y) || checkLtrbNestedSa(x, y)) {
                         forbidden.push(new GoStone(x, y, COLOR_FORBIDDEN));
+                        if (checkHoriNestedSa(x, y)) console.log(y, x, "hori nested 4");
+                        if (checkVertNestedSa(x, y)) console.log(y, x, "vert nested 4");
+                        if (checkRtlbNestedSa(x, y)) console.log(y, x, "rtlb nested 4");
+                        if (checkLtrbNestedSa(x, y)) console.log(y, x, "ltrb nested 4");
                     }
                     // 6목 이상 만들어질 시 금수에 추가 (장목 금수)
                     if (checkHoriJangmok(x, y) || checkVertJangmok(x, y) || checkRtlbJangmok(x, y) || checkLtrbJangmok(x, y)) {
@@ -376,8 +384,7 @@ function checkRtlbJangmok(x, y) {
     let _x = x + 1;
     let _y = y - 1;
     while (true) {
-        if (_x == 16) break;
-        if (_y == 0) break;
+        if (_x == 16 || _y == 0) break;
         if (board[_y][_x].color == COLOR_BLACK) cnt_black += 1;
         else break;
         _x += 1;
@@ -388,8 +395,7 @@ function checkRtlbJangmok(x, y) {
     _x = x - 1;
     _y = y + 1;
     while (true) {
-        if (_x == 0) break;
-        if (_y == 16) break;
+        if (_x == 0 || _y == 16) break;
         if (board[_y][_x].color == COLOR_BLACK) cnt_black += 1;
         else break;
         _x -= 1;
@@ -405,24 +411,22 @@ function checkRtlbJangmok(x, y) {
 function checkLtrbJangmok(x, y) {
     let cnt_black = 1;
 
-    // / 오른쪽 방향 체크
+    // \ 오른쪽 방향 체크
     let _x = x + 1;
     let _y = y + 1;
     while (true) {
-        if (_x == 16) break;
-        if (_y == 16) break;
+        if (_x == 16 || _y == 16) break;
         if (board[_y][_x].color == COLOR_BLACK) cnt_black += 1;
         else break;
         _x += 1;
         _y += 1;
     }
 
-    // / 왼쪽 방향 체크
+    // \ 왼쪽 방향 체크
     _x = x - 1;
     _y = y - 1;
     while (true) {
-        if (_x == 0) break;
-        if (_y == 0) break;
+        if (_x == 0 || _y == 0) break;
         if (board[_y][_x].color == COLOR_BLACK) cnt_black += 1;
         else break;
         _x -= 1;
@@ -446,7 +450,11 @@ function checkOpenHoriSam(x, y) {
     while (true) {
         cnt_left += 1;
         if (_x == 0) {
-            if (board[y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
+            if (board[y][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_left -= 1;
+            }
+            cnt_left -= 1;
             break;
         }
         if (board[y][_x].color == COLOR_BLACK) {
@@ -478,7 +486,11 @@ function checkOpenHoriSam(x, y) {
     while (true) {
         cnt_right += 1;
         if (_x == 16) {
-            if (board[y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
+            if (board[y][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_right -= 1;
+            }
+            cnt_right -= 1;
             break;
         }
         if (board[y][_x].color == COLOR_BLACK) {
@@ -533,7 +545,11 @@ function checkOpenVertSam(x, y) {
     while (true) {
         cnt_up += 1;
         if (_y == 0) {
-            if (board[_y + 1][x].color == COLOR_NONE) cnt_none -= 1;
+            if (board[_y + 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_up -= 1;
+            }
+            cnt_up -= 1;
             break;
         }
         if (board[_y][x].color == COLOR_BLACK) {
@@ -565,7 +581,11 @@ function checkOpenVertSam(x, y) {
     while (true) {
         cnt_down += 1;
         if (_y == 16) {
-            if (board[_y - 1][x].color == COLOR_NONE) cnt_none -= 1;
+            if (board[_y - 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_down -= 1;
+            }
+            cnt_down -= 1;
             break;
         }
         if (board[_y][x].color == COLOR_BLACK) {
@@ -620,11 +640,12 @@ function checkOpenRtlbSam(x, y) {
     let _y = y - 1;
     while (true) {
         cnt_upright += 1;
-        if (_x == 16) {
-            if (_y > 0 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 0) {
-            if (_x < 16 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 16 || _y == 0) {
+            if (_y > 0 && board[_y + 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upright -= 1;
+            }
+            cnt_upright -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -657,11 +678,12 @@ function checkOpenRtlbSam(x, y) {
     _y = y + 1;
     while (true) {
         cnt_downleft += 1;
-        if (_x == 0) {
-            if (_y < 16 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 16) {
-            if (_x > 0 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 0 || _y == 16) {
+            if (board[_y - 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downleft -= 1;
+            }
+            cnt_downleft -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -718,11 +740,12 @@ function checkOpenLtrbSam(x, y) {
     let _y = y + 1;
     while (true) {
         cnt_downright += 1;
-        if (_x == 16) {
-            if (_y < 16 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 16) {
-            if (_x < 16 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 16 || _y == 16) {
+            if (board[_y - 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downright -= 1;
+            }
+            cnt_downright -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -755,11 +778,12 @@ function checkOpenLtrbSam(x, y) {
     _y = y - 1;
     while (true) {
         cnt_upleft += 1;
-        if (_x == 0) {
-            if (_y > 0 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 0) {
-            if (_x > 0 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 0 || _y == 0) {
+            if (board[_y + 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upleft -= 1;
+            }
+            cnt_upleft -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -816,7 +840,11 @@ function checkHoriSa(x, y) {
     while (true) {
         cnt_left += 1;
         if (_x == 0) {
-            if (board[y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
+            if (board[y][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_left -= 1;
+            }
+            cnt_left -= 1;
             break;
         }
         if (board[y][_x].color == COLOR_BLACK) {
@@ -852,7 +880,11 @@ function checkHoriSa(x, y) {
     while (true) {
         cnt_right += 1;
         if (_x == 16) {
-            if (board[y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
+            if (board[y][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_right -= 1;
+            }
+            cnt_right -= 1;
             break;
         }
         if (board[y][_x].color == COLOR_BLACK) {
@@ -900,7 +932,11 @@ function checkVertSa(x, y) {
     while (true) {
         cnt_up += 1;
         if (_y == 0) {
-            if (board[_y + 1][x].color == COLOR_NONE) cnt_none -= 1;
+            if (board[_y + 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_up -= 1;
+            }
+            cnt_up -= 1;
             break;
         }
         if (board[_y][x].color == COLOR_BLACK) {
@@ -936,7 +972,11 @@ function checkVertSa(x, y) {
     while (true) {
         cnt_down += 1;
         if (_y == 16) {
-            if (board[_y - 1][x].color == COLOR_NONE) cnt_none -= 1;
+            if (board[_y - 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_down -= 1;
+            }
+            cnt_down -= 1;
             break;
         }
         if (board[_y][x].color == COLOR_BLACK) {
@@ -984,11 +1024,12 @@ function checkRtlbSa(x, y) {
     let _y = y - 1;
     while (true) {
         cnt_upright += 1;
-        if (_x == 16) {
-            if (_y > 0 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 0) {
-            if (_x < 16 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 16 || _y == 0) {
+            if (board[_y + 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upright -= 1;
+            }
+            cnt_upright -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -1025,11 +1066,12 @@ function checkRtlbSa(x, y) {
     _y = y + 1;
     while (true) {
         cnt_downleft += 1;
-        if (_x == 0) {
-            if (_y < 16 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 16) {
-            if (_x > 0 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 0 || _y == 16) {
+            if (board[_y - 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downleft -= 1;
+            }
+            cnt_downleft -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -1078,11 +1120,12 @@ function checkLtrbSa(x, y) {
     let _y = y + 1;
     while (true) {
         cnt_downright += 1;
-        if (_x == 16) {
-            if (_y < 16 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 16) {
-            if (_x < 16 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 16 || _y == 16) {
+            if (board[_y - 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downright -= 1;
+            }
+            cnt_downright -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -1119,11 +1162,12 @@ function checkLtrbSa(x, y) {
     _y = y - 1;
     while (true) {
         cnt_upleft += 1;
-        if (_x == 0) {
-            if (_y > 0 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 0) {
-            if (_x > 0 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 0 || _y == 0) {
+            if (board[_y + 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upleft -= 1;
+            }
+            cnt_upleft -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -1172,7 +1216,11 @@ function checkHoriNestedSa(x, y) {
     while (true) {
         cnt_left += 1;
         if (_x == 0) {
-            if (board[y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
+            if (board[y][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_left -= 1;
+            }
+            cnt_left -= 1;
             break;
         }
         if (board[y][_x].color == COLOR_BLACK) {
@@ -1204,7 +1252,11 @@ function checkHoriNestedSa(x, y) {
     while (true) {
         cnt_right += 1;
         if (_x == 16) {
-            if (board[y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
+            if (board[y][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_right -= 1;
+            }
+            cnt_right -= 1;
             break;
         }
         if (board[y][_x].color == COLOR_BLACK) {
@@ -1259,7 +1311,11 @@ function checkVertNestedSa(x, y) {
     while (true) {
         cnt_up += 1;
         if (_y == 0) {
-            if (board[_y + 1][x].color == COLOR_NONE) cnt_none -= 1;
+            if (board[_y + 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_up -= 1;
+            }
+            cnt_up -= 1;
             break;
         }
         if (board[_y][x].color == COLOR_BLACK) {
@@ -1291,7 +1347,11 @@ function checkVertNestedSa(x, y) {
     while (true) {
         cnt_down += 1;
         if (_y == 16) {
-            if (board[_y - 1][x].color == COLOR_NONE) cnt_none -= 1;
+            if (board[_y - 1][x].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_down -= 1;
+            }
+            cnt_down -= 1;
             break;
         }
         if (board[_y][x].color == COLOR_BLACK) {
@@ -1346,11 +1406,12 @@ function checkRtlbNestedSa(x, y) {
     let _y = y - 1;
     while (true) {
         cnt_upright += 1;
-        if (_x == 16) {
-            if (_y > 0 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 0) {
-            if (_x < 16 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 16 || _y == 0) {
+            if (board[_y + 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upright -= 1;
+            }
+            cnt_upright -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -1365,7 +1426,7 @@ function checkRtlbNestedSa(x, y) {
             break;
         } else if (board[_y][_x].color == COLOR_NONE) {
             cnt_none += 1;
-            // 빈 공간이 2개 연속이면 중단
+            // / 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
                 cnt_upright -= 2;
@@ -1383,11 +1444,12 @@ function checkRtlbNestedSa(x, y) {
     _y = y + 1;
     while (true) {
         cnt_downleft += 1;
-        if (_x == 0) {
-            if (_y < 16 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 16) {
-            if (_x > 0 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 0 || _y == 16) {
+            if (board[_y - 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downleft -= 1;
+            }
+            cnt_downleft -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -1402,7 +1464,7 @@ function checkRtlbNestedSa(x, y) {
             break;
         } else if (board[_y][_x].color == COLOR_NONE) {
             cnt_none += 1;
-            // 빈 공간이 2개 연속이면 중단
+            // 빈 공간을 연달아 두 칸 만나면 탐색 중지
             if (prev.color == COLOR_NONE) {
                 cnt_none -= 2;
                 cnt_downleft -= 2;
@@ -1443,11 +1505,12 @@ function checkLtrbNestedSa(x, y) {
     let _y = y + 1;
     while (true) {
         cnt_downright += 1;
-        if (_x == 16) {
-            if (_y < 16 && board[_y][_x - 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 16) {
-            if (_x < 16 && board[_y - 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 16 || _y == 16) {
+            if (board[_y - 1][_x - 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_downright -= 1;
+            }
+            cnt_downright -= 1;
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -1480,11 +1543,12 @@ function checkLtrbNestedSa(x, y) {
     _y = y - 1;
     while (true) {
         cnt_upleft += 1;
-        if (_x == 0) {
-            if (_y > 0 && board[_y][_x + 1].color == COLOR_NONE) cnt_none -= 1;
-            break;
-        } else if (_y == 0) {
-            if (_x > 0 && board[_y + 1][_x].color == COLOR_NONE) cnt_none -= 1;
+        if (_x == 0 || _y == 0) {
+            if (board[_y + 1][_x + 1].color == COLOR_NONE) {
+                cnt_none -= 1;
+                cnt_upleft -= 1;
+            }
+            cnt_upleft -= 1
             break;
         }
         if (board[_y][_x].color == COLOR_BLACK) {
@@ -1515,13 +1579,13 @@ function checkLtrbNestedSa(x, y) {
 
     // ● ●●● ●
     if (cnt_black == 5) {
-        if (board[y + cnt_downright + 1][x + cnt_downright + 1].color == COLOR_NONE && board[y - cnt_upleft - 1][x - cnt_upleft - 1].color == COLOR_NONE) return true;
+        if (board[y + cnt_downright - 1][x + cnt_downright - 1].color == COLOR_NONE && board[y - cnt_upleft + 1][x - cnt_upleft + 1].color == COLOR_NONE) return true;
         // ●● ●● ●●
     } else if (cnt_black == 6) {
-        if (board[y + cnt_downright + 2][x + cnt_downright + 2].color == COLOR_NONE && board[y - cnt_upleft - 2][x - cnt_upleft - 2].color == COLOR_NONE) return true;
+        if (board[y + cnt_downright - 2][x + cnt_downright - 2].color == COLOR_NONE && board[y - cnt_upleft + 2][x - cnt_upleft + 2].color == COLOR_NONE) return true;
         // ●●● ● ●●●
     } else if (cnt_black == 7) {
-        if (board[y + cnt_downright + 3][x + cnt_downright + 3].color == COLOR_NONE && board[y - cnt_upleft - 3][x - cnt_upleft - 3].color == COLOR_NONE) return true;
+        if (board[y + cnt_downright - 3][x + cnt_downright - 3].color == COLOR_NONE && board[y - cnt_upleft + 3][x - cnt_upleft + 3].color == COLOR_NONE) return true;
     }
 
     return false;
@@ -1532,32 +1596,32 @@ function placeStone(event) {
 
     // 캔버스 상에서의 마우스 클릭 좌표를 획득
     let rect = canvas.getBoundingClientRect();
-    let x = Math.round((event.clientX - rect.left) / 40);
-    let y = Math.round((event.clientY - rect.top) / 40);
+    let x = Math.round((event.clientX - rect.left) / 30);
+    let y = Math.round((event.clientY - rect.top) / 30);
 
     // 어떤 바둑돌도 놓여지지 않은 위치라면 바둑돌을 놓을 수 있도록 함
     if (x >= 1 && x < 16 && y >= 1 && y < 16) {
-        if (board[y][x].color == COLOR_NONE) {
-            board[y][x].setColor(turn);
-            stack.push(new GoStone(x, y, turn));
-            // 승리 체크 (한쪽이 승리한 경우 running을 false로 바꿈)
-            if (running = !checkWin(x, y, turn)) {
-                turn == COLOR_BLACK ? turn = COLOR_WHITE : turn = COLOR_BLACK;
-                // 흑돌 차례가 올 때 미리 3-3 금수 체크를 함
-                if (turn == COLOR_BLACK) checkForbidden();
-                turnCount += 1;
-                updateStatusMsg();
-            }
-            updateCanvas();
-        } else {
+        if (board[y][x].color != COLOR_BLACK && board[y][x].color != COLOR_WHITE) {
             // 흑돌 차례일 경우 금수 자리에 돌을 놓았을 때 경고 메시지를 출력
             if (turn == COLOR_BLACK && board[y][x].color == COLOR_FORBIDDEN) {
-                status.innerHTML = "해당 자리는 금수이므로 돌을 놓을 수 없습니다.";
+                status.innerHTML = "해당 자리는 금수입니다.";
                 setTimeout(() => updateStatusMsg(), 2000);
             } else {
-                status.innerHTML = "이미 바둑돌을 놓은 위치에는 바둑돌을 놓을 수 없습니다.";
-                setTimeout(() => updateStatusMsg(), 2000);
+                board[y][x].setColor(turn);
+                stack.push(new GoStone(x, y, turn));
+                // 승리 체크 (한쪽이 승리한 경우 running을 false로 바꿈)
+                if (running = !checkWin(x, y, turn)) {
+                    turn == COLOR_BLACK ? turn = COLOR_WHITE : turn = COLOR_BLACK;
+                    // 흑돌 차례가 올 때 금수 체크를 함
+                    if (turn == COLOR_BLACK) checkForbidden();
+                    turnCount += 1;
+                    updateStatusMsg();
+                }
+                updateCanvas();
             }
+        } else {
+            status.innerHTML = "이미 바둑돌을 놓은 위치입니다.";
+            setTimeout(() => updateStatusMsg(), 2000);
         }
     } else {
         status.innerHTML = "바둑돌을 놓을 수 있는 위치가 아닙니다.";

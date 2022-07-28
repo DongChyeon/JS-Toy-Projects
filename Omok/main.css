@@ -13,6 +13,7 @@ body {
 	background-color: #FFFFFF;
 	border-radius: 20px;
 	text-align: center;
+	font-size: 14px;
 }
 
 #canvas {
@@ -31,5 +32,5 @@ body {
 	outline: 0px;
 	background-color: #000000;
 	color: #FFFFFF;
-	font-size: 18px;
+	font-size: 14px;
 }
