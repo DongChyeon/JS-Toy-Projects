@@ -41,10 +41,10 @@ const ball = new Ball((canvas.width) * 0.5, (canvas.height) * 0.5)
 
 let rect = canvas.getBoundingClientRect();
 let drag = false;
-let x2 = 0;
-let y2 = 0;
-let mouseX = 0;
-let mouseY = 0;
+let startX = 0;
+let startY = 0;
+let endX = 0;
+let endY = 0;
 
 function animate() {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
@@ -81,34 +81,36 @@ function drawArrow(x0, y0, x1, y1) {
 }
 
 function mouseDown(event) {
-    x2 = event.clientX - rect.left;
-    y2 = event.clientY - rect.top;
+    startX = event.clientX - rect.left;
+    startY = event.clientY - rect.top;
 
     // 볼을 클릭했을 시에만 드래그 모드로 바꿈
-    if (ball.x + ball.radius >= x2 && ball.x - ball.radius <= x2 && ball.y + ball.radius >= y2 && ball.y - ball.radius <= y2) {
+    if (ball.x + ball.radius >= startX && ball.x - ball.radius <= startX && ball.y + ball.radius >= startY && ball.y - ball.radius <= startY) {
         // 볼이 너무 빠르게 움직일 시 드래그를 못하게 함
         if (ball.dx > 10 && ball.dy > 10) return;
         drag = true;
-        x2 = ball.x;
-        y2 = ball.y;
+        startX = ball.x;
+        startY = ball.y;
     }
 }
 
 function mouseMove(event) {
     if (!drag) return;
-    mouseX = event.clientX - rect.left;
-    mouseY = event.clientY - rect.top;
+    endX = event.clientX - rect.left;
+    endY = event.clientY - rect.top;
 
-    drawArrow(x2, y2, mouseX, mouseY);
+    drawArrow(startX, startY, endX, endY);
 }
 
 function mouseUp(event) {
     if (drag) {
         drag = false;
-        if (Math.abs(x2 - mouseX) + Math.abs(y2 - mouseY) < 20) return;
+        if (Math.abs(startX - endX) + Math.abs(startY - endY) < 20) return;
 
-        ball.dx = (mouseX - x2) * 0.3;
-        ball.dy = (mouseY - y2) * 0.3;
+        let power = Math.sqrt(Math.pow((endX - startX), 2) + Math.pow((endY - startY), 2));
+        let radian = Math.atan2((endX - startX), (endY - startY));
+        ball.dx = power * Math.sin(radian) * 0.5;
+        ball.dy = power * Math.cos(radian) * 0.5;
     }
 }
 
