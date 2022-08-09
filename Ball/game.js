@@ -11,16 +11,24 @@ class Ball {
     update() {
         this.x += this.dx;
         this.dx *= 0.995;
-        if (this.x + this.radius >= canvas.width || this.x - this.radius <= 0) {
+        if (this.x + this.radius >= canvas.width) {
             this.dx *= -1;
-            if (Math.abs(this.dx) < 2) this.dx *= 2;
+            this.x = canvas.width - this.radius;
+        }
+        if (this.x - this.radius <= 0) {
+            this.dx *= -1;
+            this.x = this.radius;
         }
 
         this.y += this.dy;
         this.dy *= 0.995;
-        if (this.y + this.radius >= canvas.height || this.y - this.radius <= 0) {
+        if (this.y + this.radius >= canvas.height) {
             this.dy *= -1;
-            if (Math.abs(this.dy) < 2) this.dy *= 2;
+            this.y = canvas.height - this.radius;
+        } 
+        if  (this.y - this.radius <= 0) {
+            this.dy *= -1;
+            this.y = this.radius;
         }
     }
 
