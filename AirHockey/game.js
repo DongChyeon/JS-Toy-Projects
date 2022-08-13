@@ -1,3 +1,8 @@
+/*
+To-do
+1. 타이머를 적용해 타이머가 종료시 더 많은 점수를 획득한 쪽이 승리
+*/
+
 class Ball {
     constructor(x, y) {
         this.x = x;
@@ -42,6 +47,10 @@ class Ball {
 
         // 공과 라켓이 겹치지 않도록 함
         if (this.collision(player1) || this.collision(player2)) {
+            // 라켓 사이에 공이 있을 때의 무한 계산 방지
+            if (player1.y == canvas.height / 2 + player1.radius + ball.radius && player2.y == (canvas.height / 2) - player2.radius - ball.radius) {
+                ball.y = canvas.height / 2;
+            }
             this.velocity = { x: this.velocity.x * -1, y: this.velocity.y * -1 };
             while (this.collision(player1) || this.collision(player2)) {
                 this.velocity = { x: this.velocity.x * 0.6, y: this.velocity.y * 0.6 };
@@ -76,32 +85,32 @@ class Racket {
     update() {
         this.velocity = { x: 0, y: 0 };
         if (this.player == PLAYER_BOTTOM) {
-            if (keys[37]) player1.velocity.x -= player1.speed;
-            if (keys[39]) player1.velocity.x += player1.speed;
-            if (keys[38]) player1.velocity.y -= player1.speed;
-            if (keys[40]) player1.velocity.y += player1.speed;
-            player1.x += player1.velocity.x;
-            player1.y += player1.velocity.y;
-
-            // 이동 범위를 벗어나지 않게 함
-            if (player1.x < player1.radius) player1.x = player1.radius;
-            if (player1.x > canvas.width - player1.radius) player1.x = canvas.width - player1.radius;
-            if (player1.y < canvas.height / 2 + player1.radius + ball.radius) player1.y = canvas.height / 2 + player1.radius + ball.radius;
-            if (player1.y > canvas.height - player1.radius) player1.y = canvas.height - player1.radius;
+            if (keys[37]) this.velocity.x -= this.speed;
+            if (keys[39]) this.velocity.x += this.speed;
+            if (keys[38]) this.velocity.y -= this.speed;
+            if (keys[40]) this.velocity.y += this.speed;
+            this.x += this.velocity.x;
+            this.y += this.velocity.y;
+            // 상하 이동 범위를 벗어나지 않게 함
+            if (this.y < canvas.height / 2 + this.radius + ball.radius) this.y = canvas.height / 2 + this.radius + ball.radius;
+            if (this.y > canvas.height - this.radius) this.y = canvas.height - this.radius;
         } else if (this.player == PLAYER_TOP) {
-            if (keys[65]) player2.velocity.x -= player2.speed;
-            if (keys[68]) player2.velocity.x += player2.speed;
-            if (keys[87]) player2.velocity.y -= player2.speed;
-            if (keys[83]) player2.velocity.y += player2.speed;
-            player2.x += player2.velocity.x;
-            player2.y += player2.velocity.y;
-
-            // 이동 범위를 벗어나지 않게 함
-            if (player2.x < player2.radius) player2.x = player2.radius;
-            if (player2.x > canvas.width - player2.radius) player2.x = canvas.width - player2.radius;
-            if (player2.y < player2.radius) player2.y = player2.radius;
-            if (player2.y > (canvas.height / 2) - player2.radius - ball.radius) player2.y = (canvas.height / 2) - player2.radius - ball.radius;
+            if (keys[65]) this.velocity.x -= this.speed;
+            if (keys[68]) this.velocity.x += this.speed;
+            if (keys[87]) this.velocity.y -= this.speed;
+            if (keys[83]) this.velocity.y += this.speed;
+            this.x += this.velocity.x;
+            this.y += this.velocity.y;
+            // 상하이동 범위를 벗어나지 않게 함
+            if (this.y < this.radius) this.y = this.radius;
+            if (this.y > canvas.height / 2 - this.radius - ball.radius) this.y = canvas.height / 2 - this.radius - ball.radius;
         }
+        // 좌우 이동 범위를 벗어나지 않게 함
+        if (this.x < this.radius) this.x = this.radius;
+        if (this.x > canvas.width - this.radius) this.x = canvas.width - this.radius;
+        // 양 옆 사이드에서 공이 바로 옆에 있을 때 라켓을 움직이지 못하게 함
+        if (this.x > canvas.width - ball.radius * 2 - this.radius && ball.x > canvas.width - ball.radius) this.x = canvas.width - ball.radius * 2 - this.radius;
+        if (this.x < ball.radius * 2 + this.radius && ball.x < ball.radius) this.x = ball.radius * 2 + this.radius;
     }
 
     draw() {
