@@ -1,12 +1,19 @@
 /*
+개선한 점
+1. 반복된 곱하기 0.6 연산으로 소수점이 터무니 없이 많아지지 않도록 제한
+2. 볼이 좌표 위치가 항상 정수가 되도록 제한
+
 To-do
-1. 타이머를 적용해 타이머가 종료시 더 많은 점수를 획득한 쪽이 승리
+1. 이동할 수 없는 곳에 라켓이 움직임
+2. 타이머를 적용해 타이머가 종료시 더 많은 점수를 획득한 쪽이 승리
 */
 
 class Ball {
     constructor(x, y) {
         this.x = x;
         this.y = y;
+        this.nx = x;
+        this.ny = y;
         this.velocity = { x: 0, y: 0 };
         this.color = 'red';
         this.radius = 20;
@@ -32,6 +39,9 @@ class Ball {
     }
 
     update() {
+        console.log({ x: this.x, y: this.y });
+        console.log(this.velocity);
+
         // 라켓에 충돌할 시 공의 이동 방향이 바뀜
         if (this.collision(player1)) {
             this.velocity = this.getVelocity(player1)
@@ -41,22 +51,55 @@ class Ball {
 
         getScore(this);
 
-        this.x += this.velocity.x;
-        if (this.x + this.radius >= canvas.width || this.x - this.radius <= 0) this.velocity.x *= -1;
-        this.y += this.velocity.y;
+        this.nx = this.x + this.velocity.x;
+        this.ny = this.y + this.velocity.y;
+        if (this.nx + this.radius >= canvas.width) {
+            this.nx = canvas.width - this.radius;
+            this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+        }
+        if (this.nx - this.radius <= 0) {
+            this.nx = this.radius;
+            this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+        }
+        if (this.ny + this.radius >= canvas.height) {
+            this.ny = canvas.height - this.radius;
+            this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+        }
+        if (this.ny - this.radius <= 0) {
+            this.ny = this.radius;
+            this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+        }
+        this.x = Math.round(this.nx);
+        this.y = Math.round(this.ny);
 
+        let cnt = 0;
         // 공과 라켓이 겹치지 않도록 함
         if (this.collision(player1) || this.collision(player2)) {
-            // 라켓 사이에 공이 있을 때의 무한 계산 방지
-            if (player1.y == canvas.height / 2 + player1.radius + ball.radius && player2.y == (canvas.height / 2) - player2.radius - ball.radius) {
-                ball.y = canvas.height / 2;
-            }
             this.velocity = { x: this.velocity.x * -1, y: this.velocity.y * -1 };
             while (this.collision(player1) || this.collision(player2)) {
-                this.velocity = { x: this.velocity.x * 0.6, y: this.velocity.y * 0.6 };
-                this.x += this.velocity.x;
-                if (this.x + this.radius >= canvas.width || this.x - this.radius <= 0) this.velocity.x *= -1;
-                this.y += this.velocity.y;
+                // 무한 계산 방지
+                if (cnt == 10) break;
+                this.nx = this.x + this.velocity.x;
+                this.ny = this.y + this.velocity.y;
+                if (this.nx + this.radius >= canvas.width) {
+                    this.nx = canvas.width - this.radius;
+                    this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+                }
+                if (this.nx - this.radius <= 0) {
+                    this.nx = this.radius;
+                    this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+                }
+                if (this.ny + this.radius >= canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+                }
+                if (this.ny - this.radius <= 0) {
+                    this.ny = this.radius;
+                    this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+                }
+                this.x = Math.round(this.nx);
+                this.y = Math.round(this.ny);
+                cnt += 1;
             }
         }
     }
@@ -74,6 +117,8 @@ class Racket {
     constructor(x, y, player) {
         this.x = x;
         this.y = y;
+        this.nx = x;
+        this.ny = y;
         this.velocity = { x: 0, y: 0 };
         this.color = 'red';
         this.radius = 30;
@@ -89,28 +134,36 @@ class Racket {
             if (keys[39]) this.velocity.x += this.speed;
             if (keys[38]) this.velocity.y -= this.speed;
             if (keys[40]) this.velocity.y += this.speed;
-            this.x += this.velocity.x;
-            this.y += this.velocity.y;
+            this.nx = this.x + this.velocity.x;
+            this.ny = this.y + this.velocity.y;
             // 상하 이동 범위를 벗어나지 않게 함
-            if (this.y < canvas.height / 2 + this.radius + ball.radius) this.y = canvas.height / 2 + this.radius + ball.radius;
-            if (this.y > canvas.height - this.radius) this.y = canvas.height - this.radius;
+            if (this.ny < canvas.height / 2 + this.radius + ball.radius) this.ny = canvas.height / 2 + this.radius + ball.radius;
+            if (this.ny > canvas.height - this.radius) this.ny = canvas.height - this.radius;
         } else if (this.player == PLAYER_TOP) {
             if (keys[65]) this.velocity.x -= this.speed;
             if (keys[68]) this.velocity.x += this.speed;
             if (keys[87]) this.velocity.y -= this.speed;
             if (keys[83]) this.velocity.y += this.speed;
-            this.x += this.velocity.x;
-            this.y += this.velocity.y;
+            this.nx = this.x + this.velocity.x;
+            this.ny = this.y + this.velocity.y;
             // 상하이동 범위를 벗어나지 않게 함
-            if (this.y < this.radius) this.y = this.radius;
-            if (this.y > canvas.height / 2 - this.radius - ball.radius) this.y = canvas.height / 2 - this.radius - ball.radius;
+            if (this.ny < this.radius) this.ny = this.radius;
+            if (this.ny > canvas.height / 2 - this.radius - ball.radius) this.ny = canvas.height / 2 - this.radius - ball.radius;
         }
         // 좌우 이동 범위를 벗어나지 않게 함
-        if (this.x < this.radius) this.x = this.radius;
-        if (this.x > canvas.width - this.radius) this.x = canvas.width - this.radius;
-        // 양 옆 사이드에서 공이 바로 옆에 있을 때 라켓을 움직이지 못하게 함
-        if (this.x > canvas.width - ball.radius * 2 - this.radius && ball.x > canvas.width - ball.radius) this.x = canvas.width - ball.radius * 2 - this.radius;
-        if (this.x < ball.radius * 2 + this.radius && ball.x < ball.radius) this.x = ball.radius * 2 + this.radius;
+        if (this.nx < this.radius) this.nx = this.radius;
+        if (this.nx > canvas.width - this.radius) this.nx = canvas.width - this.radius;
+
+        // 이 부분만 어떻게든 고쳐보자
+        // 상하 사이드에서 공이 바로 붙어있을 때 라켓을 움직이지 못하게 함
+        if (this.ny >= canvas.height - ball.radius * 2 - this.radius && ball.y >= canvas.height - ball.radius && ball.collision(this)) this.ny = canvas.height - ball.radius * 2 - this.radius;
+        if (this.ny <= ball.radius * 2 + this.radius && ball.y <= ball.radius && ball.collision(this)) this.ny = ball.radius * 2 + this.radius;
+        // 좌우 사이드에서 공이 바로 붙어있을 때 라켓을 움직이지 못하게 함
+        if (this.nx >= canvas.width - ball.radius * 2 - this.radius && ball.x >= canvas.width - ball.radius && ball.collision(this)) this.nx = canvas.width - ball.radius * 2 - this.radius;
+        if (this.nx <= ball.radius * 2 + this.radius && ball.x <= ball.radius && ball.collision(this)) this.nx = ball.radius * 2 + this.radius;
+
+        this.x = Math.round(this.nx);
+        this.y = Math.round(this.ny);
     }
 
     draw() {
@@ -137,8 +190,8 @@ canvas.height = 630;
 const rect = canvas.getBoundingClientRect();
 const ctx = canvas.getContext('2d');
 const ball = new Ball(canvas.width * 0.5, canvas.height - 150);
-const player1 = new Racket(canvas.width * 0.5, canvas.height - 50, PLAYER_BOTTOM);
-const player2 = new Racket(canvas.width * 0.5, 50, PLAYER_TOP);
+const player1 = new Racket(canvas.width * 0.5, canvas.height - 60, PLAYER_BOTTOM);
+const player2 = new Racket(canvas.width * 0.5, 60, PLAYER_TOP);
 
 // 키보드 입력을 처리하기 위한 딕셔너리
 const keys = {};
@@ -161,13 +214,28 @@ function render() {
     ctx.fillStyle = 'rgba(32,70,141, 0.7)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.strokeStyle = "white";
+    ctx.fillStyle = 'white';
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.moveTo(0, canvas.height * 0.5);
     ctx.lineTo(canvas.width, canvas.height * 0.5);
     ctx.arc(canvas.width * 0.5, canvas.height * 0.5, 50, 0, Math.PI * 2, true);
     ctx.stroke();
+    ctx.closePath();
+
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 3, 0);
+    ctx.lineTo(canvas.width * 2 / 3, 0);
+    ctx.lineTo(canvas.width * 2 / 3 - 20, 20);
+    ctx.lineTo(canvas.width / 3 + 20, 20);
+    ctx.lineTo(canvas.width / 3, 0);
+    ctx.moveTo(canvas.width / 3, canvas.height);
+    ctx.lineTo(canvas.width * 2 / 3, canvas.height);
+    ctx.lineTo(canvas.width * 2 / 3 - 20, canvas.height - 20);
+    ctx.lineTo(canvas.width / 3 + 20, canvas.height - 20);
+    ctx.lineTo(canvas.width / 3, canvas.height)
+    ctx.fill();
     ctx.closePath();
 
     // 공과 라켓의 위치를 수시로 업데이트 해서 그림
@@ -185,20 +253,35 @@ function render() {
 
 // 플레이어가 점수를 획득했는지 판별하는 함수
 function getScore(ball) {
-    if (ball.y + ball.radius <= 0 || ball.y + ball.radius >= canvas.height) {
-        if (ball.y + ball.radius <= 0) {
-            turn = PLAYER_TOP
-            player1_score += 1;
-        }
-        if (ball.y + ball.radius >= canvas.height) {
-            turn = PLAYER_BOTTOM;
-            player2_score += 1;
-        }
+    if (ball.y - ball.radius <= 20 && ball.x + ball.radius <= canvas.width * 2 / 3 && ball.x >= canvas.width / 3) {
+        turn = PLAYER_TOP
+        player1_score += 1;
 
         player1.x = canvas.width * 0.5;
-        player1.y = canvas.height - 50;
+        player1.y = canvas.height - 60;
         player2.x = canvas.width * 0.5;
-        player2.y = 50;
+        player2.y = 60;
+        ball.velocity = { x: 0, y: 0 };
+
+        let msg = player1_score + ' : ' + player2_score;
+
+        (turn == PLAYER_BOTTOM) ? msg += "<br>플레이어 1의 서비스" : msg += "<br>플레이어 2의 서비스";
+        status.innerHTML = msg;
+
+        ball.x = canvas.width / 2;
+        (turn == PLAYER_BOTTOM) ? ball.y = canvas.height - 150 : ball.y = 150;
+
+        ball.dx = 0;
+        ball.dy = 0;
+    }
+    if (ball.y + ball.radius >= canvas.height - 20 && ball.x + ball.radius <= canvas.width * 2 / 3 && ball.x >= canvas.width / 3) {
+        turn = PLAYER_BOTTOM;
+        player2_score += 1;
+
+        player1.x = canvas.width * 0.5;
+        player1.y = canvas.height - 60;
+        player2.x = canvas.width * 0.5;
+        player2.y = 60;
         ball.velocity = { x: 0, y: 0 };
 
         let msg = player1_score + ' : ' + player2_score;
