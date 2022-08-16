@@ -5,7 +5,6 @@
 
 To-do
 1. 이동할 수 없는 곳에 라켓이 움직임
-2. 타이머를 적용해 타이머가 종료시 더 많은 점수를 획득한 쪽이 승리
 */
 
 class Ball {
@@ -24,8 +23,8 @@ class Ball {
     // x축과 y축으로 속도를 결정하는 함수
     getVelocity(racket) {
         return {
-            x: ((this.mass - racket.mass * this.corFactor) / (this.mass + racket.mass) * this.velocity.x) + ((racket.mass + racket.mass * this.corFactor) / (this.mass + racket.mass) * racket.velocity.x),
-            y: ((this.mass - racket.mass * this.corFactor) / (this.mass + racket.mass) * this.velocity.y) + ((racket.mass + racket.mass * this.corFactor) / (this.mass + racket.mass) * racket.velocity.y)
+            x: Math.round(((this.mass - racket.mass * this.corFactor) / (this.mass + racket.mass) * this.velocity.x) + ((racket.mass + racket.mass * this.corFactor) / (this.mass + racket.mass) * racket.velocity.x) * 100000) / 100000,
+            y: Math.round(((this.mass - racket.mass * this.corFactor) / (this.mass + racket.mass) * this.velocity.y) + ((racket.mass + racket.mass * this.corFactor) / (this.mass + racket.mass) * racket.velocity.y) * 100000) / 100000
         };
     }
 
@@ -38,13 +37,45 @@ class Ball {
         return (distanceUnits < sumRadius);
     }
 
+    // 공과 라켓이 겹치지 않도록 겹칠 시 공에 반발을 줌
+    restitute() {
+        let cnt = 0;
+
+        this.velocity = { x: Math.round((this.velocity.x * -0.6) * 100000) / 100000, y: Math.round((this.velocity.y * -0.6) * 100000) / 100000 };
+        while (this.collision(player1) || this.collision(player2)) {
+            // 무한 계산 방지
+            if (cnt == 30) break;
+            this.nx = this.x + this.velocity.x;
+            this.ny = this.y + this.velocity.y;
+            if (this.nx + this.radius >= canvas.width) {
+                this.nx = canvas.width - this.radius;
+                this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+            }
+            if (this.nx - this.radius <= 0) {
+                this.nx = this.radius;
+                this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+            }
+            if (this.ny + this.radius >= canvas.height) {
+                this.y = canvas.height - this.radius;
+                this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+            }
+            if (this.ny - this.radius <= 0) {
+                this.ny = this.radius;
+                this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+            }
+            this.x = Math.round(this.nx);
+            this.y = Math.round(this.ny);
+            cnt += 1;
+        }
+    }
+
     update() {
         console.log({ x: this.x, y: this.y });
         console.log(this.velocity);
 
         // 라켓에 충돌할 시 공의 이동 방향이 바뀜
         if (this.collision(player1)) {
-            this.velocity = this.getVelocity(player1)
+            this.velocity = this.getVelocity(player1);
         } else if (this.collision(player2)) {
             this.velocity = this.getVelocity(player2);
         }
@@ -72,35 +103,9 @@ class Ball {
         this.x = Math.round(this.nx);
         this.y = Math.round(this.ny);
 
-        let cnt = 0;
         // 공과 라켓이 겹치지 않도록 함
         if (this.collision(player1) || this.collision(player2)) {
-            this.velocity = { x: this.velocity.x * -1, y: this.velocity.y * -1 };
-            while (this.collision(player1) || this.collision(player2)) {
-                // 무한 계산 방지
-                if (cnt == 10) break;
-                this.nx = this.x + this.velocity.x;
-                this.ny = this.y + this.velocity.y;
-                if (this.nx + this.radius >= canvas.width) {
-                    this.nx = canvas.width - this.radius;
-                    this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
-                }
-                if (this.nx - this.radius <= 0) {
-                    this.nx = this.radius;
-                    this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
-                }
-                if (this.ny + this.radius >= canvas.height) {
-                    this.y = canvas.height - this.radius;
-                    this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
-                }
-                if (this.ny - this.radius <= 0) {
-                    this.ny = this.radius;
-                    this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
-                }
-                this.x = Math.round(this.nx);
-                this.y = Math.round(this.ny);
-                cnt += 1;
-            }
+            this.restitute();
         }
     }
 
@@ -124,11 +129,12 @@ class Racket {
         this.radius = 30;
         this.mass = 3;
         this.player = player;
-        this.speed = 5;
+        this.speed = 7;
     }
 
     update() {
         this.velocity = { x: 0, y: 0 };
+
         if (this.player == PLAYER_BOTTOM) {
             if (keys[37]) this.velocity.x -= this.speed;
             if (keys[39]) this.velocity.x += this.speed;
@@ -154,13 +160,14 @@ class Racket {
         if (this.nx < this.radius) this.nx = this.radius;
         if (this.nx > canvas.width - this.radius) this.nx = canvas.width - this.radius;
 
-        // 이 부분만 어떻게든 고쳐보자
+        /* 이 부분만 어떻게든 고쳐보자
         // 상하 사이드에서 공이 바로 붙어있을 때 라켓을 움직이지 못하게 함
         if (this.ny >= canvas.height - ball.radius * 2 - this.radius && ball.y >= canvas.height - ball.radius && ball.collision(this)) this.ny = canvas.height - ball.radius * 2 - this.radius;
         if (this.ny <= ball.radius * 2 + this.radius && ball.y <= ball.radius && ball.collision(this)) this.ny = ball.radius * 2 + this.radius;
         // 좌우 사이드에서 공이 바로 붙어있을 때 라켓을 움직이지 못하게 함
         if (this.nx >= canvas.width - ball.radius * 2 - this.radius && ball.x >= canvas.width - ball.radius && ball.collision(this)) this.nx = canvas.width - ball.radius * 2 - this.radius;
         if (this.nx <= ball.radius * 2 + this.radius && ball.x <= ball.radius && ball.collision(this)) this.nx = ball.radius * 2 + this.radius;
+        */
 
         this.x = Math.round(this.nx);
         this.y = Math.round(this.ny);
@@ -187,7 +194,6 @@ const canvas = document.getElementById('canvas');
 const status = document.getElementById('status');
 canvas.width = 450;
 canvas.height = 630;
-const rect = canvas.getBoundingClientRect();
 const ctx = canvas.getContext('2d');
 const ball = new Ball(canvas.width * 0.5, canvas.height - 150);
 const player1 = new Racket(canvas.width * 0.5, canvas.height - 60, PLAYER_BOTTOM);
@@ -209,19 +215,22 @@ let turn = PLAYER_BOTTOM;
 let player1_score = 0;
 let player2_score = 0;
 
+// 게임 제한 시간
+let total_time = 60;
+
 function render() {
     // 탁구대를 그림
     ctx.fillStyle = 'rgba(32,70,141, 0.7)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = 'white';
+    ctx.strokeStyle = 'white';
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.moveTo(0, canvas.height * 0.5);
     ctx.lineTo(canvas.width, canvas.height * 0.5);
     ctx.arc(canvas.width * 0.5, canvas.height * 0.5, 50, 0, Math.PI * 2, true);
-    ctx.stroke();
     ctx.closePath();
+    ctx.stroke();
 
     ctx.fillStyle = 'white';
     ctx.beginPath();
@@ -234,9 +243,9 @@ function render() {
     ctx.lineTo(canvas.width * 2 / 3, canvas.height);
     ctx.lineTo(canvas.width * 2 / 3 - 20, canvas.height - 20);
     ctx.lineTo(canvas.width / 3 + 20, canvas.height - 20);
-    ctx.lineTo(canvas.width / 3, canvas.height)
-    ctx.fill();
+    ctx.lineTo(canvas.width / 3, canvas.height);
     ctx.closePath();
+    ctx.fill();
 
     // 공과 라켓의 위치를 수시로 업데이트 해서 그림
     ball.update();
@@ -248,7 +257,7 @@ function render() {
     player2.draw();
 
     // 어느 한 쪽 플레이어가 승리하지 않았다면 게임 계속 진행
-    if (!running == checkWin()) requestAnimationFrame(render);
+    if (running) requestAnimationFrame(render);
 }
 
 // 플레이어가 점수를 획득했는지 판별하는 함수
@@ -262,11 +271,6 @@ function getScore(ball) {
         player2.x = canvas.width * 0.5;
         player2.y = 60;
         ball.velocity = { x: 0, y: 0 };
-
-        let msg = player1_score + ' : ' + player2_score;
-
-        (turn == PLAYER_BOTTOM) ? msg += "<br>플레이어 1의 서비스" : msg += "<br>플레이어 2의 서비스";
-        status.innerHTML = msg;
 
         ball.x = canvas.width / 2;
         (turn == PLAYER_BOTTOM) ? ball.y = canvas.height - 150 : ball.y = 150;
@@ -284,32 +288,12 @@ function getScore(ball) {
         player2.y = 60;
         ball.velocity = { x: 0, y: 0 };
 
-        let msg = player1_score + ' : ' + player2_score;
-
-        (turn == PLAYER_BOTTOM) ? msg += "<br>플레이어 1의 서비스" : msg += "<br>플레이어 2의 서비스";
-        status.innerHTML = msg;
-
         ball.x = canvas.width / 2;
         (turn == PLAYER_BOTTOM) ? ball.y = canvas.height - 150 : ball.y = 150;
 
         ball.dx = 0;
         ball.dy = 0;
     }
-}
-
-// 어느 한 쪽 플레이어가 승리헀는지 판별하는 함수
-function checkWin() {
-    if (player1_score == 11) {
-        msg = "플레이어 1의 승리입니다<br>다시 할려면 새로고침하시오";
-        status.innerHTML = msg;
-        return true;
-    } else if (player2_score == 11) {
-        msg = "플레이어 2의 승리입니다<br>다시 할려면 새로고침하시오";
-        status.innerHTML = msg;
-        return true;
-    }
-
-    return false;
 }
 
 function keyDown(event) {
@@ -340,9 +324,28 @@ function keyUp(event) {
     event.preventDefault();
 }
 
+function timer() {
+    TIMER = setInterval(() => {
+        total_time -= 1;
+        status.innerHTML = player1_score + " : " + player2_score + "</br>제한시간 : " + total_time + " 초";
+        if (total_time == 0) {
+            clearInterval(TIMER);
+            if (player1_score > player2_score) {
+                status.innerHTML = "플레이어 1의 승리입니다<br>다시 할려면 새로고침하시오";
+            } else if (player2_score > player1_score) {
+                status.innerHTML = "플레이어 2의 승리입니다<br>다시 할려면 새로고침하시오";
+            } else {
+                status.innerHTML = "무승부 입니다<br>다시 할려면 새로고침하시오";
+            }
+            running = false;
+        }
+    }, 1000);
+}
+
 function init() {
     window.addEventListener("keydown", keyDown, false);
     window.addEventListener("keyup", keyUp, false);
 
+    timer();
     render();
 }
