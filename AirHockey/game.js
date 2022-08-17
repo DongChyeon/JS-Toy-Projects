@@ -70,9 +70,6 @@ class Ball {
     }
 
     update() {
-        console.log({ x: this.x, y: this.y });
-        console.log(this.velocity);
-
         // 라켓에 충돌할 시 공의 이동 방향이 바뀜
         if (this.collision(player1)) {
             this.velocity = this.getVelocity(player1);
@@ -191,7 +188,7 @@ const PLAYER_TOP = -1;
 const PLAYER_BOTTOM = -2;
 
 const canvas = document.getElementById('canvas');
-const status = document.getElementById('status');
+const msg = document.getElementById('msg');
 canvas.width = 450;
 canvas.height = 630;
 const ctx = canvas.getContext('2d');
@@ -327,15 +324,15 @@ function keyUp(event) {
 function timer() {
     TIMER = setInterval(() => {
         total_time -= 1;
-        status.innerHTML = player1_score + " : " + player2_score + "</br>제한시간 : " + total_time + " 초";
+        msg.innerHTML = player1_score + " : " + player2_score + "</br>제한시간 : " + total_time + " 초";
         if (total_time == 0) {
             clearInterval(TIMER);
             if (player1_score > player2_score) {
-                status.innerHTML = "플레이어 1의 승리입니다<br>다시 할려면 새로고침하시오";
+                msg.innerHTML = "플레이어 1의 승리입니다<br>다시 할려면 새로고침하시오";
             } else if (player2_score > player1_score) {
-                status.innerHTML = "플레이어 2의 승리입니다<br>다시 할려면 새로고침하시오";
+                msg.innerHTML = "플레이어 2의 승리입니다<br>다시 할려면 새로고침하시오";
             } else {
-                status.innerHTML = "무승부 입니다<br>다시 할려면 새로고침하시오";
+                msg.innerHTML = "무승부 입니다<br>다시 할려면 새로고침하시오";
             }
             running = false;
         }
