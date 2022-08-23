@@ -1,12 +1,3 @@
-/*
-개선한 점
-1. 반복된 곱하기 0.6 연산으로 소수점이 터무니 없이 많아지지 않도록 제한
-2. 볼이 좌표 위치가 항상 정수가 되도록 제한
-
-To-do
-1. 이동할 수 없는 곳에 라켓이 움직임
-*/
-
 class Ball {
     constructor(x, y) {
         this.x = x;
@@ -35,38 +26,6 @@ class Ball {
         let sumRadius = this.radius + racket.radius;
 
         return (distanceUnits < sumRadius);
-    }
-
-    // 공과 라켓이 겹치지 않도록 겹칠 시 공에 반발을 줌
-    restitute() {
-        let cnt = 0;
-
-        this.velocity = { x: Math.round((this.velocity.x * -0.6) * 100000) / 100000, y: Math.round((this.velocity.y * -0.6) * 100000) / 100000 };
-        while (this.collision(player1) || this.collision(player2)) {
-            // 무한 계산 방지
-            if (cnt == 30) break;
-            this.nx = this.x + this.velocity.x;
-            this.ny = this.y + this.velocity.y;
-            if (this.nx + this.radius >= canvas.width) {
-                this.nx = canvas.width - this.radius;
-                this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
-            }
-            if (this.nx - this.radius <= 0) {
-                this.nx = this.radius;
-                this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
-            }
-            if (this.ny + this.radius >= canvas.height) {
-                this.y = canvas.height - this.radius;
-                this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
-            }
-            if (this.ny - this.radius <= 0) {
-                this.ny = this.radius;
-                this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
-            }
-            this.x = Math.round(this.nx);
-            this.y = Math.round(this.ny);
-            cnt += 1;
-        }
     }
 
     update() {
@@ -101,8 +60,65 @@ class Ball {
         this.y = Math.round(this.ny);
 
         // 공과 라켓이 겹치지 않도록 함
-        if (this.collision(player1) || this.collision(player2)) {
-            this.restitute();
+        if (this.collision(player1)) {
+            let cnt = 0;
+
+            this.velocity = { x: Math.round((this.velocity.x * -0.6) * 100000) / 100000, y: Math.round((this.velocity.y * -0.6) * 100000) / 100000 };
+            while (this.collision(player1)) {
+                // 무한 계산 방지
+                if (cnt == 20) break;
+                this.nx = this.x + this.velocity.x;
+                this.ny = this.y + this.velocity.y;
+                if (this.nx + this.radius >= canvas.width) {
+                    this.nx = canvas.width - this.radius;
+                    this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+                }
+                if (this.nx - this.radius <= 0) {
+                    this.nx = this.radius;
+                    this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+                }
+                if (this.ny + this.radius >= canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+                }
+                if (this.ny - this.radius <= 0) {
+                    this.ny = this.radius;
+                    this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+                }
+                this.x = Math.round(this.nx);
+                this.y = Math.round(this.ny);
+                cnt += 1;
+            }
+        }
+        if (this.collision(player2)) {
+            let cnt = 0;
+
+            this.velocity = { x: Math.round((this.velocity.x * -0.6) * 100000) / 100000, y: Math.round((this.velocity.y * -0.6) * 100000) / 100000 };
+            while (this.collision(player2)) {
+                // 무한 계산 방지
+                if (cnt == 20) break;
+                this.nx = this.x + this.velocity.x;
+                this.ny = this.y + this.velocity.y;
+                if (this.nx + this.radius >= canvas.width) {
+                    this.nx = canvas.width - this.radius;
+                    this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+                }
+                if (this.nx - this.radius <= 0) {
+                    this.nx = this.radius;
+                    this.velocity.x = Math.round((this.velocity.x * -0.6) * 100000) / 100000;
+                }
+                if (this.ny + this.radius >= canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+                }
+                if (this.ny - this.radius <= 0) {
+                    this.ny = this.radius;
+                    this.velocity.y = Math.round((this.velocity.y * -0.6) * 100000) / 100000;
+                }
+                this.x = Math.round(this.nx);
+                this.y = Math.round(this.ny);
+                cnt += 1;
+            }
         }
     }
 
@@ -140,7 +156,7 @@ class Racket {
             this.nx = this.x + this.velocity.x;
             this.ny = this.y + this.velocity.y;
             // 상하 이동 범위를 벗어나지 않게 함
-            if (this.ny < canvas.height / 2 + this.radius + ball.radius) this.ny = canvas.height / 2 + this.radius + ball.radius;
+            if (this.ny < canvas.height / 2 + this.radius) this.ny = canvas.height / 2 + this.radius;
             if (this.ny > canvas.height - this.radius) this.ny = canvas.height - this.radius;
         } else if (this.player == PLAYER_TOP) {
             if (keys[65]) this.velocity.x -= this.speed;
@@ -151,20 +167,11 @@ class Racket {
             this.ny = this.y + this.velocity.y;
             // 상하이동 범위를 벗어나지 않게 함
             if (this.ny < this.radius) this.ny = this.radius;
-            if (this.ny > canvas.height / 2 - this.radius - ball.radius) this.ny = canvas.height / 2 - this.radius - ball.radius;
+            if (this.ny > canvas.height / 2 - this.radius) this.ny = canvas.height / 2 - this.radius;
         }
         // 좌우 이동 범위를 벗어나지 않게 함
         if (this.nx < this.radius) this.nx = this.radius;
         if (this.nx > canvas.width - this.radius) this.nx = canvas.width - this.radius;
-
-        /* 이 부분만 어떻게든 고쳐보자
-        // 상하 사이드에서 공이 바로 붙어있을 때 라켓을 움직이지 못하게 함
-        if (this.ny >= canvas.height - ball.radius * 2 - this.radius && ball.y >= canvas.height - ball.radius && ball.collision(this)) this.ny = canvas.height - ball.radius * 2 - this.radius;
-        if (this.ny <= ball.radius * 2 + this.radius && ball.y <= ball.radius && ball.collision(this)) this.ny = ball.radius * 2 + this.radius;
-        // 좌우 사이드에서 공이 바로 붙어있을 때 라켓을 움직이지 못하게 함
-        if (this.nx >= canvas.width - ball.radius * 2 - this.radius && ball.x >= canvas.width - ball.radius && ball.collision(this)) this.nx = canvas.width - ball.radius * 2 - this.radius;
-        if (this.nx <= ball.radius * 2 + this.radius && ball.x <= ball.radius && ball.collision(this)) this.nx = ball.radius * 2 + this.radius;
-        */
 
         this.x = Math.round(this.nx);
         this.y = Math.round(this.ny);
@@ -212,8 +219,9 @@ let turn = PLAYER_BOTTOM;
 let player1_score = 0;
 let player2_score = 0;
 
-// 게임 제한 시간
-let total_time = 60;
+let total_time = 60;    // 게임 제한 시간
+let running_time = 0;   // 게임 실행 시간
+let now = 0;
 
 function render() {
     // 탁구대를 그림
@@ -253,13 +261,26 @@ function render() {
     player1.draw();
     player2.draw();
 
-    // 어느 한 쪽 플레이어가 승리하지 않았다면 게임 계속 진행
+    let running_time = Date.now() - now;
+    msg.innerHTML = player1_score + " : " + player2_score + "</br>제한시간 : " + parseInt(total_time - running_time / 1000) + " 초";
+    if (total_time == parseInt(running_time / 1000)) {
+        if (player1_score > player2_score) {
+            msg.innerHTML = "플레이어 1의 승리입니다<br>다시 할려면 새로고침하시오";
+        } else if (player2_score > player1_score) {
+            msg.innerHTML = "플레이어 2의 승리입니다<br>다시 할려면 새로고침하시오";
+        } else {
+            msg.innerHTML = "무승부 입니다<br>다시 할려면 새로고침하시오";
+        }
+        running = false;
+    }
+
+    // 제한 시간이 다 지나지 않았다면 게암 계속 실행
     if (running) requestAnimationFrame(render);
 }
 
 // 플레이어가 점수를 획득했는지 판별하는 함수
 function getScore(ball) {
-    if (ball.y - ball.radius <= 20 && ball.x + ball.radius <= canvas.width * 2 / 3 && ball.x >= canvas.width / 3) {
+    if (ball.y - ball.radius <= 0 && ball.x + ball.radius <= canvas.width * 2 / 3 && ball.x >= canvas.width / 3) {
         turn = PLAYER_TOP
         player1_score += 1;
 
@@ -275,7 +296,7 @@ function getScore(ball) {
         ball.dx = 0;
         ball.dy = 0;
     }
-    if (ball.y + ball.radius >= canvas.height - 20 && ball.x + ball.radius <= canvas.width * 2 / 3 && ball.x >= canvas.width / 3) {
+    if (ball.y + ball.radius >= canvas.height && ball.x + ball.radius <= canvas.width * 2 / 3 && ball.x >= canvas.width / 3) {
         turn = PLAYER_BOTTOM;
         player2_score += 1;
 
@@ -321,28 +342,10 @@ function keyUp(event) {
     event.preventDefault();
 }
 
-function timer() {
-    TIMER = setInterval(() => {
-        total_time -= 1;
-        msg.innerHTML = player1_score + " : " + player2_score + "</br>제한시간 : " + total_time + " 초";
-        if (total_time == 0) {
-            clearInterval(TIMER);
-            if (player1_score > player2_score) {
-                msg.innerHTML = "플레이어 1의 승리입니다<br>다시 할려면 새로고침하시오";
-            } else if (player2_score > player1_score) {
-                msg.innerHTML = "플레이어 2의 승리입니다<br>다시 할려면 새로고침하시오";
-            } else {
-                msg.innerHTML = "무승부 입니다<br>다시 할려면 새로고침하시오";
-            }
-            running = false;
-        }
-    }, 1000);
-}
-
 function init() {
     window.addEventListener("keydown", keyDown, false);
     window.addEventListener("keyup", keyUp, false);
 
-    timer();
+    now = Date.now();
     render();
 }
