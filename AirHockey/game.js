@@ -159,6 +159,7 @@ class Racket {
 
     draw() {
         ctx.lineWidth = 3;
+        ctx.strokeStyle = 'white';
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
@@ -183,6 +184,9 @@ const ball = new Ball(canvas.width * 0.5, canvas.height - 150);
 const player1 = new Racket(canvas.width * 0.5, canvas.height - 60, PLAYER_BOTTOM);
 const player2 = new Racket(canvas.width * 0.5, 60, PLAYER_TOP);
 
+const goalSound = new Audio('./sounds/goal.wav');
+const timerOverSound = new Audio('./sounds/time_over.wav');
+
 // 키보드 입력을 처리하기 위한 딕셔너리
 const keys = {};
 keys[37] = false;
@@ -205,19 +209,38 @@ let now = 0;
 
 function render() {
     // 탁구대를 그림
-    ctx.fillStyle = 'rgba(32,70,141, 0.7)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 6;
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(0, canvas.height * 0.5);
-    ctx.lineTo(canvas.width, canvas.height * 0.5);
+    ctx.lineTo(canvas.width * 0.5 - 50, canvas.height * 0.5);
+    ctx.moveTo(canvas.width * 0.5 + 40, canvas.height * 0.5);
+    ctx.arc(canvas.width * 0.5, canvas.height * 0.5, 40, 0, Math.PI * 2, true);
+    ctx.moveTo(canvas.width * 0.5 + 50, canvas.height * 0.5);
     ctx.arc(canvas.width * 0.5, canvas.height * 0.5, 50, 0, Math.PI * 2, true);
+    ctx.lineTo(canvas.width, canvas.height * 0.5);
+    ctx.moveTo(0, canvas.height * 0.5 - 75);
+    ctx.lineTo(canvas.width, canvas.height * 0.5 - 75);
+    ctx.moveTo(0, canvas.height * 0.5 + 75);
+    ctx.lineTo(canvas.width, canvas.height * 0.5 + 75);
+    ctx.moveTo(canvas.width / 4 + 30, 180);
+    ctx.arc(canvas.width / 4, 180, 30, 0, Math.PI * 2, true);
+    ctx.moveTo(canvas.width / 4 * 3 + 30, 180);
+    ctx.arc(canvas.width / 4 * 3, 180, 30, 0, Math.PI * 2, true);
+    ctx.moveTo(canvas.width / 4 + 30, canvas.height - 180);
+    ctx.arc(canvas.width / 4, canvas.height - 180, 30, 0, Math.PI * 2, true);
+    ctx.moveTo(canvas.width / 4 * 3 + 30, canvas.height - 180);
+    ctx.arc(canvas.width / 4 * 3, canvas.height - 180, 30, 0, Math.PI * 2, true);
+    ctx.moveTo(0, 120);
+    ctx.lineTo(canvas.width, 120);
+    ctx.moveTo(0, canvas.height - 120);
+    ctx.lineTo(canvas.width, canvas.height - 120);
     ctx.closePath();
     ctx.stroke();
 
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = 'black';
     ctx.beginPath();
     ctx.moveTo(canvas.width / 3, 0);
     ctx.lineTo(canvas.width * 2 / 3, 0);
@@ -252,6 +275,7 @@ function render() {
             msg.innerHTML = "무승부 입니다<br>다시 할려면 새로고침하시오";
         }
         running = false;
+        timerOverSound.play();
     }
 
     // 제한 시간이 다 지나지 않았다면 게암 계속 실행
@@ -263,6 +287,7 @@ function getScore(ball) {
     if (ball.y - ball.radius <= 0 && ball.x + ball.radius <= canvas.width * 2 / 3 && ball.x >= canvas.width / 3) {
         turn = PLAYER_TOP
         player1_score += 1;
+        goalSound.play();
 
         player1.x = canvas.width * 0.5;
         player1.y = canvas.height - 60;
@@ -279,6 +304,7 @@ function getScore(ball) {
     if (ball.y + ball.radius >= canvas.height && ball.x + ball.radius <= canvas.width * 2 / 3 && ball.x >= canvas.width / 3) {
         turn = PLAYER_BOTTOM;
         player2_score += 1;
+        goalSound.play();
 
         player1.x = canvas.width * 0.5;
         player1.y = canvas.height - 60;

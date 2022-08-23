@@ -29,4 +29,5 @@ body {
 #canvas {
     flex: 1;
     border: 10px solid black;
+    border-radius: 50px;
 }
